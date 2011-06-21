@@ -960,3 +960,9 @@ const ESMS::ESMStore& WindowManager::getStore() const
 {
     return environment.mWorld->getStore();
 }
+
+void WindowManager::viewDocument (const std::string& text, bool scroll, const MWWorld::Ptr& ptr)
+{
+    // here goes the book/scroll GUI code.
+
+}

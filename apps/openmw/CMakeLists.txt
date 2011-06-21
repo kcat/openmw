@@ -137,6 +137,7 @@ set(GAMEWORLD
     mwworld/actionteleport.cpp
     mwworld/actiontalk.cpp
     mwworld/actiontake.cpp
+    mwworld/actionread.cpp
     mwworld/containerutil.cpp
     mwworld/player.cpp
     mwworld/doingphysics.cpp
@@ -154,6 +155,7 @@ set(GAMEWORLD_HEADER
     mwworld/containerstore.hpp
     mwworld/actiontalk.hpp
     mwworld/actiontake.hpp
+    mwworld/actionread.hpp
     mwworld/containerstore.hpp
     mwworld/manualref.hpp
     mwworld/containerutil.hpp

@@ -32,6 +32,7 @@ namespace Compiler
 namespace MWWorld
 {
     class Environment;
+    class Ptr;
 }
 
 namespace OEngine
@@ -247,9 +248,9 @@ namespace MWGui
 
     void removeDialog(OEngine::GUI::Layout* dialog);
     ///< Hides dialog and schedules dialog to be deleted.
-    
+
     void messageBox (const std::string& message, const std::vector<std::string>& buttons);
-    
+
     void onFrame (float frameDuration);
 
     /**
@@ -262,6 +263,9 @@ namespace MWGui
     const std::string &getGameSettingString(const std::string &id, const std::string &default_);
 
     const ESMS::ESMStore& getStore() const;
+
+    void viewDocument (const std::string& text, bool scroll, const MWWorld::Ptr& ptr);
+    ///< Open the book/scroll GUI.
 
   private:
 
