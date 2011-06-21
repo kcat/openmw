@@ -94,6 +94,14 @@ namespace MWClass
         return ref->base->script;
     }
 
+    std::string Light::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        ESMS::LiveCellRef<ESM::Light, MWWorld::RefData> *ref =
+            ptr.get<ESM::Light>();
+
+        return ref->base->icon;
+    }
+
     void Light::registerSelf()
     {
         boost::shared_ptr<Class> instance (new Light);

@@ -60,6 +60,14 @@ namespace MWClass
         return ref->base->script;
     }
 
+    std::string Potion::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        ESMS::LiveCellRef<ESM::Potion, MWWorld::RefData> *ref =
+            ptr.get<ESM::Potion>();
+
+        return ref->base->icon;
+    }
+
     void Potion::registerSelf()
     {
         boost::shared_ptr<Class> instance (new Potion);

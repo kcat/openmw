@@ -60,6 +60,14 @@ namespace MWClass
         return ref->base->script;
     }
 
+    std::string Clothing::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        ESMS::LiveCellRef<ESM::Clothing, MWWorld::RefData> *ref =
+            ptr.get<ESM::Clothing>();
+
+        return ref->base->icon;
+    }
+
     void Clothing::registerSelf()
     {
         boost::shared_ptr<Class> instance (new Clothing);

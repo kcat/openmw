@@ -60,6 +60,14 @@ namespace MWClass
         return ref->base->script;
     }
 
+    std::string Repair::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        ESMS::LiveCellRef<ESM::Repair, MWWorld::RefData> *ref =
+            ptr.get<ESM::Repair>();
+
+        return ref->base->icon;
+    }
+
     void Repair::registerSelf()
     {
         boost::shared_ptr<Class> instance (new Repair);

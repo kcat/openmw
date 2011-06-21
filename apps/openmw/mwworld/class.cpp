@@ -124,6 +124,12 @@ namespace MWWorld
         return Ogre::Vector3 (0, 0, 0);
     }
 
+    std::string Class::getInventoryIcon (const Ptr& ptr) const
+    {
+        throw std::runtime_error (
+            "this class can not be put into an inventory; no inventory icon available");
+    }
+
     const Class& Class::get (const std::string& key)
     {
         std::map<std::string, boost::shared_ptr<Class> >::const_iterator iter = sClasses.find (key);

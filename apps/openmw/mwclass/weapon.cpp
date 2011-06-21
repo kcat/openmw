@@ -73,6 +73,14 @@ namespace MWClass
         return ref->base->script;
     }
 
+    std::string Weapon::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        ESMS::LiveCellRef<ESM::Weapon, MWWorld::RefData> *ref =
+            ptr.get<ESM::Weapon>();
+
+        return ref->base->icon;
+    }
+
     void Weapon::registerSelf()
     {
         boost::shared_ptr<Class> instance (new Weapon);

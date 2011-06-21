@@ -60,6 +60,14 @@ namespace MWClass
         return ref->base->script;
     }
 
+    std::string Probe::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        ESMS::LiveCellRef<ESM::Probe, MWWorld::RefData> *ref =
+            ptr.get<ESM::Probe>();
+
+        return ref->base->icon;
+    }
+
     void Probe::registerSelf()
     {
         boost::shared_ptr<Class> instance (new Probe);

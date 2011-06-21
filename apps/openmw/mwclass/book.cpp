@@ -62,6 +62,14 @@ namespace MWClass
         return ref->base->script;
     }
 
+    std::string Book::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        ESMS::LiveCellRef<ESM::Book, MWWorld::RefData> *ref =
+            ptr.get<ESM::Book>();
+
+        return ref->base->icon;
+    }
+
     void Book::registerSelf()
     {
         boost::shared_ptr<Class> instance (new Book);

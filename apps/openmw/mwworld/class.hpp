@@ -139,6 +139,10 @@ namespace MWWorld
             ///< Return desired movement vector (determined based on movement settings,
             /// stance and stats).
 
+            virtual std::string getInventoryIcon (const Ptr& ptr) const;
+            ///< Return name of inventory icon. If the object can't be put into an inventory,
+            /// an exception is thrown.
+
             static const Class& get (const std::string& key);
             ///< If there is no class for this \a key, an exception is thrown.
 

@@ -60,6 +60,14 @@ namespace MWClass
         return ref->base->script;
     }
 
+    std::string Lockpick::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        ESMS::LiveCellRef<ESM::Tool, MWWorld::RefData> *ref =
+            ptr.get<ESM::Tool>();
+
+        return ref->base->icon;
+    }
+
     void Lockpick::registerSelf()
     {
         boost::shared_ptr<Class> instance (new Lockpick);

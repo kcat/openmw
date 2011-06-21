@@ -60,6 +60,14 @@ namespace MWClass
         return ref->base->script;
     }
 
+    std::string Miscellaneous::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        ESMS::LiveCellRef<ESM::Miscellaneous, MWWorld::RefData> *ref =
+            ptr.get<ESM::Miscellaneous>();
+
+        return ref->base->icon;
+    }
+
     void Miscellaneous::registerSelf()
     {
         boost::shared_ptr<Class> instance (new Miscellaneous);
