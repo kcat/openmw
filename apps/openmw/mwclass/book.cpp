@@ -6,7 +6,7 @@
 #include <components/esm_store/cell_store.hpp>
 
 #include "../mwworld/ptr.hpp"
-#include "../mwworld/actiontake.hpp"
+#include "../mwworld/actionread.hpp"
 
 #include "../mwrender/cellimp.hpp"
 
@@ -42,10 +42,10 @@ namespace MWClass
     boost::shared_ptr<MWWorld::Action> Book::activate (const MWWorld::Ptr& ptr,
         const MWWorld::Ptr& actor, const MWWorld::Environment& environment) const
     {
-        // TODO implement reading
+        ESMS::LiveCellRef<ESM::Book, MWWorld::RefData> *ref = ptr.get<ESM::Book>();
 
         return boost::shared_ptr<MWWorld::Action> (
-            new MWWorld::ActionTake (ptr));
+            new MWWorld::ActionRead (ptr, ref->base->text, ref->base->data.isScroll));
     }
 
     void Book::insertIntoContainer (const MWWorld::Ptr& ptr,

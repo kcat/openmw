@@ -32,6 +32,7 @@ namespace Compiler
 namespace MWWorld
 {
     class Environment;
+    class Ptr;
 }
 
 namespace OEngine
@@ -62,6 +63,7 @@ namespace MWGui
   class CreateClassDialog;
   class BirthDialog;
   class ReviewDialog;
+  class MessageBoxManager;
 
   struct ClassPoint
   {
@@ -84,6 +86,7 @@ namespace MWGui
     MapWindow *map;
     MainMenu *menu;
     StatsWindow *stats;
+    MessageBoxManager *mMessageBoxManager;
 #if 0
     InventoryWindow *inventory;
 #endif
@@ -248,6 +251,8 @@ namespace MWGui
 
     void messageBox (const std::string& message, const std::vector<std::string>& buttons);
 
+    void onFrame (float frameDuration);
+
     /**
      * Fetches a GMST string from the store, if there is no setting with the given
      * ID or it is not a string the default string is returned.
@@ -258,6 +263,9 @@ namespace MWGui
     const std::string &getGameSettingString(const std::string &id, const std::string &default_);
 
     const ESMS::ESMStore& getStore() const;
+
+    void viewDocument (const std::string& text, bool scroll, const MWWorld::Ptr& ptr);
+    ///< Open the book/scroll GUI.
 
   private:
 

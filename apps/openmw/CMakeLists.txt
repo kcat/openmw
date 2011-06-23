@@ -50,6 +50,7 @@ set(GAMEGUI_HEADER
     mwgui/dialogue_history.hpp
     mwgui/window_base.hpp
     mwgui/stats_window.hpp
+    mwgui/messagebox.hpp
 )
 set(GAMEGUI
     mwgui/window_manager.cpp
@@ -65,6 +66,7 @@ set(GAMEGUI
     mwgui/dialogue_history.cpp
     mwgui/window_base.cpp
     mwgui/stats_window.cpp
+    mwgui/messagebox.cpp
 )
 source_group(apps\\openmw\\mwgui FILES ${GAMEGUI_HEADER} ${GAMEGUI})
 
@@ -135,6 +137,7 @@ set(GAMEWORLD
     mwworld/actionteleport.cpp
     mwworld/actiontalk.cpp
     mwworld/actiontake.cpp
+    mwworld/actionread.cpp
     mwworld/containerutil.cpp
     mwworld/player.cpp
     mwworld/doingphysics.cpp
@@ -152,6 +155,7 @@ set(GAMEWORLD_HEADER
     mwworld/containerstore.hpp
     mwworld/actiontalk.hpp
     mwworld/actiontake.hpp
+    mwworld/actionread.hpp
     mwworld/containerstore.hpp
     mwworld/manualref.hpp
     mwworld/containerutil.hpp
