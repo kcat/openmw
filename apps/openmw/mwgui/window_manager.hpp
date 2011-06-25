@@ -64,6 +64,7 @@ namespace MWGui
   class BirthDialog;
   class ReviewDialog;
   class MessageBoxManager;
+  class BookDialog;
 
   struct ClassPoint
   {
@@ -103,6 +104,7 @@ namespace MWGui
     CreateClassDialog *createClassDialog;
     BirthDialog *birthSignDialog;
     ReviewDialog *reviewDialog;
+    BookDialog *bookDialog;
 
     // Keeps track of current step in Generate Class dialogs
     unsigned generateClassStep;

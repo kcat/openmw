@@ -42,6 +42,7 @@ set(GAMEGUI_HEADER
     mwgui/widgets.hpp
     mwgui/race.hpp
     mwgui/class.hpp
+    mwgui/books.hpp
     mwgui/birth.hpp
     mwgui/review.hpp
     mwgui/window_manager.hpp
@@ -61,6 +62,7 @@ set(GAMEGUI
     mwgui/race.cpp
     mwgui/birth.cpp
     mwgui/class.cpp
+    mwgui/books.cpp
     mwgui/review.cpp
     mwgui/dialogue.cpp
     mwgui/dialogue_history.cpp

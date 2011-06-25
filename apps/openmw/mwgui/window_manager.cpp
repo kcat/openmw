@@ -9,6 +9,7 @@
 #include "dialogue_history.hpp"
 #include "stats_window.hpp"
 #include "messagebox.hpp"
+#include "books.hpp"
 
 #include "../mwmechanics/mechanicsmanager.hpp"
 #include "../mwinput/inputmanager.hpp"
@@ -34,6 +35,7 @@ WindowManager::WindowManager(MyGUI::Gui *_gui, MWWorld::Environment& environment
   , createClassDialog(nullptr)
   , birthSignDialog(nullptr)
   , reviewDialog(nullptr)
+  , bookDialog(nullptr)
   , gui(_gui)
   , mode(GM_Game)
   , nextMode(GM_Game)
@@ -103,6 +105,7 @@ WindowManager::~WindowManager()
     delete createClassDialog;
     delete birthSignDialog;
     delete reviewDialog;
+    delete bookDialog;
 
     cleanupGarbage();
 }
@@ -963,6 +966,12 @@ const ESMS::ESMStore& WindowManager::getStore() const
 
 void WindowManager::viewDocument (const std::string& text, bool scroll, const MWWorld::Ptr& ptr)
 {
-    // here goes the book/scroll GUI code.
-
+    if (bookDialog){
+        removeDialog(bookDialog);
+    }
+    bookDialog = new BookDialog(*this);
+    bookDialog->Open(text);
 }
+
+
+
