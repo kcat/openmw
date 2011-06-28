@@ -306,6 +306,9 @@ namespace MWGui
     void onReviewDialogBack();
     void onReviewActivateDialog(int parDialog);
 
+    // Books and Scrolls
+    void onDocumentClosed(bool taken);
+
     enum CreationStageEnum
     {
         NotStarted,

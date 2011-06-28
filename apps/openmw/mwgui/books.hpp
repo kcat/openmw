@@ -21,6 +21,14 @@ namespace MWGui
 
         void setPage(int p, const std::string& text);
 
+        // Events
+        typedef delegates::CDelegate1<bool> EventHandle_Bool;
+        /**
+        Event : "Close" or "Take" button clicked\n
+        Signature : void method(bool taken)\n
+        */
+        EventHandle_Bool eventCloseOrTaken;
+
     private:
 
         MyGUI::WidgetPtr leftPageWidget, rightPageWidget;

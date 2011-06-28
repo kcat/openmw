@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<MyGUI type="Layout">
+    <Widget type="Window" skin="MW_Box" layer="Windows" position="0 0 500 342" name="_Main">
+        <!-- Book pages -->
+        <Widget type="StaticText" skin="SandText" position="8 8 234 306" name="LeftPage"/>
+        <Widget type="StaticText" skin="SandText" position="258 8 234 306" name="RightPage"/>
+
+        <!-- Page-turn buttons -->
+        <Widget type="Button" skin="MW_Button" position="12 314 64 12" name="PrevPageBTN">
+            <Property key="Widget_Caption" value="Prev"/>
+        </Widget>
+        <Widget type="Button" skin="MW_Button" position="416 314 64 12" name="NextPageBTN">
+            <Property key="Widget_Caption" value="Next"/>
+        </Widget>
+
+        <!-- Take/Close buttons -->
+        <Widget type="Button" skin="MW_Button" position="178 314 64 12" name="TakeBTN">
+            <Property key="Widget_Caption" value="Take"/>
+        </Widget>
+        <Widget type="Button" skin="MW_Button" position="258 314 64 12" name="CloseBTN">
+            <Property key="Widget_Caption" value="Close"/>
+        </Widget>
+    </Widget>
+</MyGUI>

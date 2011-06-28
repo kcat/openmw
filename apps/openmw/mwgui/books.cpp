@@ -36,7 +36,7 @@ EVENTS
 */
 
 void BookDialog::onOkClicked(MyGUI::Widget* _sender){
-    eventDone(this);
+    eventCloseOrTaken(false);
 }
 
 

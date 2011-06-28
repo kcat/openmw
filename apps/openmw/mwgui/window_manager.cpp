@@ -333,6 +333,16 @@ void WindowManager::updateVisible()
         return;
     }
 
+    if (mode == GM_Documents)
+    {
+        if (!bookDialog){
+            bookDialog = new BookDialog(*this);
+            bookDialog->eventCloseOrTaken = MyGUI::newDelegate(this, &WindowManager::onDocumentClosed);
+        }
+        // Opening is done by the viewDocument method.
+        return;
+    }
+
 
     // Unsupported mode, switch back to game
     // Note: The call will eventually end up this method again but
@@ -966,11 +976,17 @@ const ESMS::ESMStore& WindowManager::getStore() const
 
 void WindowManager::viewDocument (const std::string& text, bool scroll, const MWWorld::Ptr& ptr)
 {
+    setGuiMode(GM_Documents);    
+    bookDialog->Open(text);
+}
+
+// Books and Scrolls
+void WindowManager::onDocumentClosed(bool taken){
+    // NOTE: At the moment, the argument "taken" is ignored.
     if (bookDialog){
         removeDialog(bookDialog);
     }
-    bookDialog = new BookDialog(*this);
-    bookDialog->Open(text);
+    setGuiMode(GM_Game);
 }
 
 

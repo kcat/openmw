@@ -16,6 +16,7 @@ namespace MWGui
       GM_Dialogue,      // NPC interaction
       GM_Barter,
       GM_Rest,
+      GM_Documents, // Books and scrolls
       // .. more here ..
 
       // Startup character creation dialogs
