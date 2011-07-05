@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <MyGUI type="Layout">
-    <Widget type="Window" skin="MW_Box" layer="Windows" position="0 0 500 342" name="_Main">
+    <Widget type="Window" skin="MW_BookWindow" layer="Books" position="0 0 500 342" name="_Main">
         <!-- Book pages -->
-        <Widget type="StaticText" skin="SandText" position="8 8 234 306" name="LeftPage"/>
-        <Widget type="StaticText" skin="SandText" position="258 8 234 306" name="RightPage"/>
+        <Widget type="StaticText" skin="BookScrollText" position="8 8 234 306" name="LeftPage"/>
+        <Widget type="StaticText" skin="BookScrollText" position="258 8 234 306" name="RightPage"/>
 
         <!-- Page-turn buttons -->
         <Widget type="Button" skin="MW_Button" position="12 314 64 12" name="PrevPageBTN">
