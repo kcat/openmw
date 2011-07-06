@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- This file contains the skins for use on books and scrolls -->
+
+<MyGUI type="Skin">
+    <!-- Book Skins -->
+    <Skin name="MW_BookWindow" size="512 256" texture="textures\tx_menubook.dds">
+        <BasisSkin type="MainSkin" offset="0 0 512 256">
+            <State name="normal" offset="0 0 512 256"/>
+        </BasisSkin>
+    </Skin>
+
+    <Skin name = "BookScrollText" size = "16 16">
+        <Property key="FontName" value = "MyGUI_CoreFont.18" />
+        <Property key="FontHeight" value = "18" />
+        <Property key="AlignText" value = "ALIGN_DEFAULT" />
+        <Property key="TextColour" value = "0.0 0.0 0.0" />
+        
+        <BasisSkin type="SimpleText" offset = "0 0 16 16"  align = "ALIGN_STRETCH"/>
+    </Skin>
+</MyGUI>
