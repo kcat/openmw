@@ -7,19 +7,15 @@
         <Widget type="StaticText" skin="BookScrollText" position="258 8 234 306" name="RightPage"/>
 
         <!-- Page-turn buttons -->
-        <Widget type="Button" skin="MW_Button" position="12 314 64 12" name="PrevPageBTN">
-            <Property key="Widget_Caption" value="Prev"/>
+        <Widget type="Button" skin="MW_DocPrevButton" position="12 314 64 12" name="PrevPageBTN">
         </Widget>
-        <Widget type="Button" skin="MW_Button" position="416 314 64 12" name="NextPageBTN">
-            <Property key="Widget_Caption" value="Next"/>
+        <Widget type="Button" skin="MW_DocNextButton" position="416 314 64 12" name="NextPageBTN">
         </Widget>
 
         <!-- Take/Close buttons -->
-        <Widget type="Button" skin="MW_Button" position="178 314 64 12" name="TakeBTN">
-            <Property key="Widget_Caption" value="Take"/>
+        <Widget type="Button" skin="MW_DocTakeButton" position="178 314 64 12" name="TakeBTN">
         </Widget>
-        <Widget type="Button" skin="MW_Button" position="258 314 64 12" name="CloseBTN">
-            <Property key="Widget_Caption" value="Close"/>
+        <Widget type="Button" skin="MW_DocCloseButton" position="258 314 64 12" name="CloseBTN">
         </Widget>
     </Widget>
 </MyGUI>

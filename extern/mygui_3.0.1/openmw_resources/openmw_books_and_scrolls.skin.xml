@@ -10,6 +10,30 @@
         </BasisSkin>
     </Skin>
 
+    <Skin name="MW_DocNextButton" size="64 32" texture="textures\tx_menubook_next_idle.dds">
+        <BasisSkin type="MainSkin" offset="0 0 64 32">
+            <State name="normal" offset="0 0 64 32"/>
+        </BasisSkin>
+    </Skin>
+
+    <Skin name="MW_DocTakeButton" size="64 32" texture="textures\tx_menubook_take_idle.dds">
+        <BasisSkin type="MainSkin" offset="0 0 64 32">
+            <State name="normal" offset="0 0 64 32"/>
+        </BasisSkin>
+    </Skin>
+
+    <Skin name="MW_DocPrevButton" size="64 32" texture="textures\tx_menubook_prev_idle.dds">
+        <BasisSkin type="MainSkin" offset="0 0 64 32">
+            <State name="normal" offset="0 0 64 32"/>
+        </BasisSkin>
+    </Skin>
+
+    <Skin name="MW_DocCloseButton" size="64 32" texture="textures\tx_menubook_close_idle.dds">
+        <BasisSkin type="MainSkin" offset="0 0 64 32">
+            <State name="normal" offset="0 0 64 32"/>
+        </BasisSkin>
+    </Skin>
+
     <Skin name = "BookScrollText" size = "16 16">
         <Property key="FontName" value = "MyGUI_CoreFont.18" />
         <Property key="FontHeight" value = "18" />
