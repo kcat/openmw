@@ -1,21 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <MyGUI type="Layout">
-    <Widget type="Window" skin="MW_BookWindow" layer="Books" position="0 0 500 342" name="_Main">
+    <Widget type="Window" skin="MW_BookWindow" layer="Books" position="0 0 618 384" name="_Main">
         <!-- Book pages -->
-        <Widget type="StaticText" skin="BookScrollText" position="8 8 234 306" name="LeftPage"/>
-        <Widget type="StaticText" skin="BookScrollText" position="258 8 234 306" name="RightPage"/>
+        <Widget type="StaticText" skin="BookScrollText" position="28 8 272 342" name="LeftPage"/>
+        <Widget type="StaticText" skin="BookScrollText" position="318 8 272 342" name="RightPage"/>
 
         <!-- Page-turn buttons -->
-        <Widget type="Button" skin="MW_DocPrevButton" position="12 314 64 12" name="PrevPageBTN">
+        <Widget type="Button" skin="MW_DocPrevButton" position="256 352 64 32" name="PrevPageBTN">
+            <Property key="Button_ModeImage" value="true"/>
         </Widget>
-        <Widget type="Button" skin="MW_DocNextButton" position="416 314 64 12" name="NextPageBTN">
+        <Widget type="Button" skin="MW_DocNextButton" position="319 352 64 32" name="NextPageBTN">
+            <Property key="Button_ModeImage" value="true"/>
         </Widget>
 
         <!-- Take/Close buttons -->
-        <Widget type="Button" skin="MW_DocTakeButton" position="178 314 64 12" name="TakeBTN">
+        <Widget type="Button" skin="MW_DocTakeButton" position="28 352 64 32" name="TakeBTN">
+            <Property key="Button_ModeImage" value="true"/>
         </Widget>
-        <Widget type="Button" skin="MW_DocCloseButton" position="258 314 64 12" name="CloseBTN">
+        <Widget type="Button" skin="MW_DocCloseButton" position="546 352 64 32" name="CloseBTN">
+            <Property key="Button_ModeImage" value="true"/>
         </Widget>
     </Widget>
 </MyGUI>

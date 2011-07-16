@@ -5,8 +5,8 @@
 <MyGUI type="Skin">
     <!-- Book Skins -->
     <Skin name="MW_BookWindow" size="512 256" texture="textures\tx_menubook.dds">
-        <BasisSkin type="MainSkin" offset="0 0 512 256">
-            <State name="normal" offset="0 0 512 256"/>
+        <BasisSkin type="MainSkin" offset="0 0 512 256" align="STRETCH">
+            <State name="normal" offset="50 0 412 256" align="STRETCH" />
         </BasisSkin>
     </Skin>
 
