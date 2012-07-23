@@ -289,7 +289,6 @@ void OMW::Engine::go()
     }
     mOgre->configure(
         mCfgMgr.getLogPath().string(),
-        mCfgMgr.getPluginsConfigPath().string(),
         renderSystem,
         false);
 
