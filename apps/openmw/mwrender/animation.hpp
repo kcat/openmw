@@ -48,6 +48,11 @@ public:
     Animation();
     virtual ~Animation();
 
+    void playAnim(const std::string &groupname, const std::string &begin, const std::string &end);
+    void loopAnim(const std::string &groupname,
+                  const std::string &begin, const std::string &beginloop,
+                  const std::string &endloop, const std::string &end, int loops);
+
     void playGroup(std::string groupname, int mode, int loops);
     void skipAnim();
     virtual void runAnimation(float timepassed);

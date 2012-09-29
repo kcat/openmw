@@ -58,7 +58,13 @@ bool Animation::findGroupInfo(const std::string &groupname, const std::string &b
             group->mStart = iter;
             group->mLoopStart = iter;
         }
-        else if(startloop.size() <= strlen && std::mismatch(strpos, strend, startloop.begin(), checklow()).first == strend)
+        else if(stop.size() <= strlen && std::mismatch(strpos, strend, stop.begin(), checklow()).first == strend)
+        {
+            group->mStop = iter;
+            if(group->mLoopStop == mTextKeys.end())
+                group->mLoopStop = iter;
+        }
+        if(startloop.size() <= strlen && std::mismatch(strpos, strend, startloop.begin(), checklow()).first == strend)
         {
             group->mLoopStart = iter;
         }
@@ -66,18 +72,41 @@ bool Animation::findGroupInfo(const std::string &groupname, const std::string &b
         {
             group->mLoopStop = iter;
         }
-        else if(stop.size() <= strlen && std::mismatch(strpos, strend, stop.begin(), checklow()).first == strend)
-        {
-            group->mStop = iter;
-            if(group->mLoopStop == mTextKeys.end())
-                group->mLoopStop = iter;
-        }
         if(group->mStart != mTextKeys.end() && group->mLoopStart != mTextKeys.end() &&
            group->mLoopStop != mTextKeys.end() && group->mStop != mTextKeys.end())
             return true;
     }
 
     return false;
+}
+
+
+void Animation::playAnim(const std::string &groupname, const std::string &begin, const std::string &end)
+{
+    Group group;
+    group.mLoops = 1;
+
+    if(!findGroupInfo(groupname, begin, begin, end, end, &group))
+        throw std::runtime_error("Failed to find animation group "+groupname);
+
+    mCurGroup = group;
+    mNextGroup.mLoops = 0;
+    mTime = mCurGroup.mStart->first;
+}
+
+void Animation::loopAnim(const std::string &groupname,
+                const std::string &begin, const std::string &beginloop,
+                const std::string &endloop, const std::string &end, int loops)
+{
+    Group group;
+    group.mLoops = loops;
+
+    if(!findGroupInfo(groupname, begin, beginloop, endloop, end, &group))
+        throw std::runtime_error("Failed to find animation group "+groupname);
+
+    mCurGroup = group;
+    mNextGroup.mLoops = 0;
+    mTime = mCurGroup.mStart->first;
 }
 
 
