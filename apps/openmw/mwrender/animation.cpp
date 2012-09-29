@@ -74,10 +74,23 @@ bool Animation::findGroupInfo(const std::string &groupname, const std::string &b
         }
         if(group->mStart != mTextKeys.end() && group->mLoopStart != mTextKeys.end() &&
            group->mLoopStop != mTextKeys.end() && group->mStop != mTextKeys.end())
+        {
+            group->mNext = group->mStart;
             return true;
+        }
     }
 
     return false;
+}
+
+
+void Animation::processGroup(Group &group, float time)
+{
+    while(time >= group.mNext->first)
+    {
+        // TODO: Process group.mNext->second
+        group.mNext++;
+    }
 }
 
 
@@ -150,20 +163,30 @@ void Animation::runAnimation(float timepassed)
     if(mCurGroup.mLoops > 0 && !mSkipFrame)
     {
         mTime += timepassed;
+    do_more:
         while(mCurGroup.mLoops > 1 && mTime >= mCurGroup.mLoopStop->first)
         {
+            processGroup(mCurGroup, mCurGroup.mLoopStop->first);
+            mCurGroup.mNext = mCurGroup.mLoopStart;
+
             mCurGroup.mLoops--;
             mTime = mTime - mCurGroup.mLoopStop->first + mCurGroup.mLoopStart->first;
         }
         if(mCurGroup.mLoops <= 1 && mTime >= mCurGroup.mStop->first)
         {
+            processGroup(mCurGroup, mCurGroup.mStop->first);
             if(mNextGroup.mLoops > 0)
+            {
                 mTime = mTime - mCurGroup.mStop->first + mNextGroup.mStart->first;
-            else
-                mTime = mCurGroup.mStop->first;
-            mCurGroup = mNextGroup;
-            mNextGroup.mLoops = 0;
+                mCurGroup = mNextGroup;
+                mNextGroup.mLoops = 0;
+                goto do_more;
+            }
+            mTime = mCurGroup.mStop->first;
+            mCurGroup.mLoops = 0;
         }
+        else
+            processGroup(mCurGroup, mTime);
 
         if(mEntityList.mSkelBase)
         {

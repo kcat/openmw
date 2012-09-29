@@ -21,11 +21,15 @@ class Animation {
         NifOgre::TextKeyMap::const_iterator mLoopStart;
         NifOgre::TextKeyMap::const_iterator mLoopStop;
 
+        NifOgre::TextKeyMap::const_iterator mNext;
+
         size_t mLoops;
 
         Group() : mLoops(0)
         { }
     };
+
+    void processGroup(Group &group, float time);
 
 protected:
     Ogre::SceneNode* mInsert;
