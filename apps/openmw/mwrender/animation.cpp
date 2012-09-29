@@ -89,7 +89,8 @@ void Animation::processGroup(Group &group, float time)
     while(time >= group.mNext->first)
     {
         // TODO: Process group.mNext->second
-        group.mNext++;
+        if(++group.mNext == mTextKeys.end())
+            break;
     }
 }
 
