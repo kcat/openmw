@@ -15,17 +15,15 @@
 namespace MWRender {
 
 class Animation {
-    struct GroupTimes {
-        float mStart;
-        float mStop;
-        float mLoopStart;
-        float mLoopStop;
+    struct Group {
+        NifOgre::TextKeyMap::const_iterator mStart;
+        NifOgre::TextKeyMap::const_iterator mStop;
+        NifOgre::TextKeyMap::const_iterator mLoopStart;
+        NifOgre::TextKeyMap::const_iterator mLoopStop;
 
         size_t mLoops;
 
-        GroupTimes()
-          : mStart(-1.0f), mStop(-1.0f), mLoopStart(-1.0f), mLoopStop(-1.0f),
-            mLoops(0)
+        Group() : mLoops(0)
         { }
     };
 
@@ -33,15 +31,15 @@ protected:
     Ogre::SceneNode* mInsert;
 
     float mTime;
-    GroupTimes mCurGroup;
-    GroupTimes mNextGroup;
+    Group mCurGroup;
+    Group mNextGroup;
 
     bool mSkipFrame;
 
     NifOgre::EntityList mEntityList;
     NifOgre::TextKeyMap mTextKeys;
 
-    bool findGroupTimes(const std::string &groupname, GroupTimes *times);
+    bool findGroupTimes(const std::string &groupname, Group *group);
 
 public:
     Animation();

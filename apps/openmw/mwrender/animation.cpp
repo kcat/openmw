@@ -34,8 +34,13 @@ struct checklow {
     }
 };
 
-bool Animation::findGroupTimes(const std::string &groupname, Animation::GroupTimes *times)
+bool Animation::findGroupTimes(const std::string &groupname, Animation::Group *group)
 {
+    group->mStart = mTextKeys.end();
+    group->mLoopStart = mTextKeys.end();
+    group->mLoopStop = mTextKeys.end();
+    group->mStop = mTextKeys.end();
+
     const std::string &start = groupname+": start";
     const std::string &startloop = groupname+": loop start";
     const std::string &stop = groupname+": stop";
@@ -44,63 +49,65 @@ bool Animation::findGroupTimes(const std::string &groupname, Animation::GroupTim
     NifOgre::TextKeyMap::const_iterator iter;
     for(iter = mTextKeys.begin();iter != mTextKeys.end();iter++)
     {
-        if(times->mStart >= 0.0f && times->mLoopStart >= 0.0f && times->mLoopStop >= 0.0f && times->mStop >= 0.0f)
-            return true;
-
         std::string::const_iterator strpos = iter->second.begin();
         std::string::const_iterator strend = iter->second.end();
         size_t strlen = strend-strpos;
 
         if(start.size() <= strlen && std::mismatch(strpos, strend, start.begin(), checklow()).first == strend)
         {
-            times->mStart = iter->first;
-            times->mLoopStart = iter->first;
+            group->mStart = iter;
+            group->mLoopStart = iter;
         }
         else if(startloop.size() <= strlen && std::mismatch(strpos, strend, startloop.begin(), checklow()).first == strend)
         {
-            times->mLoopStart = iter->first;
+            group->mLoopStart = iter;
         }
         else if(stoploop.size() <= strlen && std::mismatch(strpos, strend, stoploop.begin(), checklow()).first == strend)
         {
-            times->mLoopStop = iter->first;
+            group->mLoopStop = iter;
         }
         else if(stop.size() <= strlen && std::mismatch(strpos, strend, stop.begin(), checklow()).first == strend)
         {
-            times->mStop = iter->first;
-            if(times->mLoopStop < 0.0f)
-                times->mLoopStop = iter->first;
-            break;
+            group->mStop = iter;
+            if(group->mLoopStop == mTextKeys.end())
+                group->mLoopStop = iter;
         }
+        if(group->mStart != mTextKeys.end() && group->mLoopStart != mTextKeys.end() &&
+           group->mLoopStop != mTextKeys.end() && group->mStop != mTextKeys.end())
+            return true;
     }
 
-    return (times->mStart >= 0.0f && times->mLoopStart >= 0.0f && times->mLoopStop >= 0.0f && times->mStop >= 0.0f);
+    return false;
 }
 
 
 void Animation::playGroup(std::string groupname, int mode, int loops)
 {
-    GroupTimes times;
-    times.mLoops = loops;
+    Group group;
+    group.mLoops = loops;
 
     if(groupname == "all")
     {
-        times.mStart = times.mLoopStart = 0.0f;
-        times.mLoopStop = times.mStop = 0.0f;
+        group.mStart = group.mLoopStart = group.mLoopStop = group.mStop = mTextKeys.end();
 
-        NifOgre::TextKeyMap::const_reverse_iterator iter = mTextKeys.rbegin();
-        if(iter != mTextKeys.rend())
-            times.mLoopStop = times.mStop = iter->first;
+        NifOgre::TextKeyMap::const_iterator iter = mTextKeys.begin();
+        if(iter != mTextKeys.end())
+        {
+            group.mStart = group.mLoopStart = iter;
+            iter = mTextKeys.end();
+            group.mLoopStop = group.mStop = --iter;
+        }
     }
-    else if(!findGroupTimes(groupname, &times))
+    else if(!findGroupTimes(groupname, &group))
         throw std::runtime_error("Failed to find animation group "+groupname);
 
     if(mode == 0 && mCurGroup.mLoops > 0)
-        mNextGroup = times;
+        mNextGroup = group;
     else
     {
-        mCurGroup = times;
-        mNextGroup = GroupTimes();
-        mTime = ((mode==2) ? mCurGroup.mLoopStart : mCurGroup.mStart);
+        mCurGroup = group;
+        mNextGroup.mLoops = 0;
+        mTime = ((mode==2) ? mCurGroup.mLoopStart->first : mCurGroup.mStart->first);
     }
 }
 
@@ -114,22 +121,19 @@ void Animation::runAnimation(float timepassed)
     if(mCurGroup.mLoops > 0 && !mSkipFrame)
     {
         mTime += timepassed;
-        if(mTime >= mCurGroup.mLoopStop)
+        while(mCurGroup.mLoops > 1 && mTime >= mCurGroup.mLoopStop->first)
         {
-            if(mCurGroup.mLoops > 1)
-            {
-                mCurGroup.mLoops--;
-                mTime = mTime - mCurGroup.mLoopStop + mCurGroup.mLoopStart;
-            }
-            else if(mTime >= mCurGroup.mStop)
-            {
-                if(mNextGroup.mLoops > 0)
-                    mTime = mTime - mCurGroup.mStop + mNextGroup.mStart;
-                else
-                    mTime = mCurGroup.mStop;
-                mCurGroup = mNextGroup;
-                mNextGroup = GroupTimes();
-            }
+            mCurGroup.mLoops--;
+            mTime = mTime - mCurGroup.mLoopStop->first + mCurGroup.mLoopStart->first;
+        }
+        if(mCurGroup.mLoops <= 1 && mTime >= mCurGroup.mStop->first)
+        {
+            if(mNextGroup.mLoops > 0)
+                mTime = mTime - mCurGroup.mStop->first + mNextGroup.mStart->first;
+            else
+                mTime = mCurGroup.mStop->first;
+            mCurGroup = mNextGroup;
+            mNextGroup.mLoops = 0;
         }
 
         if(mEntityList.mSkelBase)
