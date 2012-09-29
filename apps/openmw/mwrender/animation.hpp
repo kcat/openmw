@@ -39,7 +39,10 @@ protected:
     NifOgre::EntityList mEntityList;
     NifOgre::TextKeyMap mTextKeys;
 
-    bool findGroupTimes(const std::string &groupname, Group *group);
+    bool findGroupInfo(const std::string &groupname,
+                       const std::string &begin, const std::string &beginloop,
+                       const std::string &endloop, const std::string &end,
+                       Animation::Group *group);
 
 public:
     Animation();

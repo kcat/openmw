@@ -34,17 +34,17 @@ struct checklow {
     }
 };
 
-bool Animation::findGroupTimes(const std::string &groupname, Animation::Group *group)
+bool Animation::findGroupInfo(const std::string &groupname, const std::string &begin, const std::string &beginloop, const std::string &endloop, const std::string &end, Animation::Group *group)
 {
     group->mStart = mTextKeys.end();
     group->mLoopStart = mTextKeys.end();
     group->mLoopStop = mTextKeys.end();
     group->mStop = mTextKeys.end();
 
-    const std::string &start = groupname+": start";
-    const std::string &startloop = groupname+": loop start";
-    const std::string &stop = groupname+": stop";
-    const std::string &stoploop = groupname+": loop stop";
+    const std::string &start = groupname+": "+begin;
+    const std::string &startloop = groupname+": "+beginloop;
+    const std::string &stoploop = groupname+": "+endloop;
+    const std::string &stop = groupname+": "+end;
 
     NifOgre::TextKeyMap::const_iterator iter;
     for(iter = mTextKeys.begin();iter != mTextKeys.end();iter++)
@@ -98,7 +98,7 @@ void Animation::playGroup(std::string groupname, int mode, int loops)
             group.mLoopStop = group.mStop = --iter;
         }
     }
-    else if(!findGroupTimes(groupname, &group))
+    else if(!findGroupInfo(groupname, "start", "start loop", "stop loop", "stop", &group))
         throw std::runtime_error("Failed to find animation group "+groupname);
 
     if(mode == 0 && mCurGroup.mLoops > 0)
