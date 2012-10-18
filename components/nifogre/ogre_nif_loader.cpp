@@ -53,6 +53,14 @@ using namespace Nif;
 using namespace NifOgre;
 
 
+struct checklow {
+    bool operator()(const char &a, const char &b) const
+    {
+        return ::tolower(a) == ::tolower(b);
+    }
+};
+
+
 // Helper class that computes the bounding box and of a mesh
 class BoundsFinder
 {
@@ -174,7 +182,7 @@ static void insertTextKeys(const Nif::NiTextKeyExtraData *tk, TextKeyMap *textke
 }
 
 
-void buildBones(Ogre::Skeleton *skel, const Nif::Node *node, std::vector<Nif::NiKeyframeController*> &ctrls, Ogre::Bone *parent=NULL)
+void buildBones(Ogre::Skeleton *skel, const Nif::Node *node, std::vector<Nif::NiKeyframeController*> &ctrls, TextKeyMap &textkeys, Ogre::Bone *parent=NULL)
 {
     Ogre::Bone *bone;
     if(!skel->hasBone(node->name))
@@ -197,6 +205,17 @@ void buildBones(Ogre::Skeleton *skel, const Nif::Node *node, std::vector<Nif::Ni
         ctrl = ctrl->next;
     }
 
+    Nif::ExtraPtr e = node->extra;
+    while(!e.empty())
+    {
+        if(e->recType == Nif::RC_NiTextKeyExtraData)
+        {
+            const Nif::NiTextKeyExtraData *tk = static_cast<const Nif::NiTextKeyExtraData*>(e.getPtr());
+            insertTextKeys(tk, &textkeys);
+        }
+        e = e->extra;
+    }
+
     const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
     if(ninode)
     {
@@ -204,59 +223,16 @@ void buildBones(Ogre::Skeleton *skel, const Nif::Node *node, std::vector<Nif::Ni
         for(size_t i = 0;i < children.length();i++)
         {
             if(!children[i].empty())
-                buildBones(skel, children[i].getPtr(), ctrls, bone);
+                buildBones(skel, children[i].getPtr(), ctrls, textkeys, bone);
         }
     }
 }
 
 
-/* Comparitor to help sort Key<> vectors */
-template<class T>
-struct KeyTimeSort
+static void loadAnimation(Ogre::Skeleton *skel, Ogre::Animation *anim, float startTime, float endTime, const std::vector<Nif::NiKeyframeController*> &ctrls, const std::vector<std::string> &targets)
 {
-    bool operator()(const Nif::KeyT<T> &lhs, const Nif::KeyT<T> &rhs) const
-    { return lhs.mTime < rhs.mTime; }
-};
+    OgreAssert(startTime >= 0.0f && startTime <= endTime, "Invalid start time");
 
-
-typedef std::map<std::string,NIFSkeletonLoader,ciLessBoost> LoaderMap;
-static LoaderMap sLoaders;
-
-public:
-void loadResource(Ogre::Resource *resource)
-{
-    Ogre::Skeleton *skel = dynamic_cast<Ogre::Skeleton*>(resource);
-    OgreAssert(skel, "Attempting to load a skeleton into a non-skeleton resource!");
-
-    Nif::NIFFile nif(skel->getName());
-    const Nif::Node *node = dynamic_cast<const Nif::Node*>(nif.getRecord(0));
-
-    std::vector<Nif::NiKeyframeController*> ctrls;
-    buildBones(skel, node, ctrls);
-
-    std::vector<std::string> targets;
-    // TODO: If ctrls.size() == 0, check for a .kf file sharing the name of the .nif file
-    if(ctrls.size() == 0) // No animations? Then we're done.
-        return;
-
-    float maxtime = 0.0f;
-    for(size_t i = 0;i < ctrls.size();i++)
-    {
-        Nif::NiKeyframeController *ctrl = ctrls[i];
-        maxtime = std::max(maxtime, ctrl->timeStop);
-        Nif::Named *target = dynamic_cast<Nif::Named*>(ctrl->target.getPtr());
-        if(target != NULL)
-            targets.push_back(target->name);
-    }
-
-    if(targets.size() != ctrls.size())
-    {
-        warn("Target size mismatch ("+Ogre::StringConverter::toString(targets.size())+" targets, "+
-             Ogre::StringConverter::toString(ctrls.size())+" controllers)");
-        return;
-    }
-
-    Ogre::Animation *anim = skel->createAnimation(skel->getName(), maxtime);
     /* HACK: Pre-create the node tracks by matching the track IDs with the
      * bone IDs. Otherwise, Ogre animates the wrong bones. */
     size_t bonecount = skel->getNumBones();
@@ -267,14 +243,13 @@ void loadResource(Ogre::Resource *resource)
     {
         Nif::NiKeyframeController *kfc = ctrls[i];
         Nif::NiKeyframeData *kf = kfc->data.getPtr();
+        float starttime = std::max(startTime, kfc->timeStart);
+        float endtime = std::min(endTime, kfc->timeStop);
 
         /* Get the keyframes and make sure they're sorted first to last */
         QuaternionKeyList quatkeys = kf->mRotations;
         Vector3KeyList trankeys = kf->mTranslations;
         FloatKeyList scalekeys = kf->mScales;
-        std::sort(quatkeys.mKeys.begin(), quatkeys.mKeys.end(), KeyTimeSort<Ogre::Quaternion>());
-        std::sort(trankeys.mKeys.begin(), trankeys.mKeys.end(), KeyTimeSort<Ogre::Vector3>());
-        std::sort(scalekeys.mKeys.begin(), scalekeys.mKeys.end(), KeyTimeSort<float>());
 
         QuaternionKeyList::VecType::const_iterator quatiter = quatkeys.mKeys.begin();
         Vector3KeyList::VecType::const_iterator traniter = trankeys.mKeys.begin();
@@ -299,7 +274,7 @@ void loadResource(Ogre::Resource *resource)
 
         while(!didlast)
         {
-            float curtime = kfc->timeStop;
+            float curtime = std::numeric_limits<float>::max();
 
             //Get latest time
             if(quatiter != quatkeys.mKeys.end())
@@ -309,11 +284,11 @@ void loadResource(Ogre::Resource *resource)
             if(scaleiter != scalekeys.mKeys.end())
                 curtime = std::min(curtime, scaleiter->mTime);
 
-            curtime = std::max(curtime, kfc->timeStart);
-            if(curtime >= kfc->timeStop)
+            curtime = std::max(curtime, starttime);
+            if(curtime >= endtime)
             {
                 didlast = true;
-                curtime = kfc->timeStop;
+                curtime = endtime;
             }
 
             // Get the latest quaternions, translations, and scales for the
@@ -369,6 +344,70 @@ void loadResource(Ogre::Resource *resource)
         }
     }
     anim->optimise();
+}
+
+
+/* Comparitor to help sort Key<> vectors */
+template<class T>
+struct KeyTimeSort
+{
+    bool operator()(const Nif::KeyT<T> &lhs, const Nif::KeyT<T> &rhs) const
+    { return lhs.mTime < rhs.mTime; }
+};
+
+
+typedef std::map<std::string,NIFSkeletonLoader,ciLessBoost> LoaderMap;
+static LoaderMap sLoaders;
+
+public:
+void loadResource(Ogre::Resource *resource)
+{
+    Ogre::Skeleton *skel = dynamic_cast<Ogre::Skeleton*>(resource);
+    OgreAssert(skel, "Attempting to load a skeleton into a non-skeleton resource!");
+
+    Nif::NIFFile nif(skel->getName());
+    const Nif::Node *node = dynamic_cast<const Nif::Node*>(nif.getRecord(0));
+
+    std::vector<Nif::NiKeyframeController*> ctrls;
+    TextKeyMap textkeys;
+    buildBones(skel, node, ctrls, textkeys);
+
+    std::vector<std::string> targets;
+    // TODO: If ctrls.size() == 0, check for a .kf file sharing the name of the .nif file
+    if(ctrls.size() == 0) // No animations? Then we're done.
+        return;
+
+    float maxtime = 0.0f;
+    for(size_t i = 0;i < ctrls.size();i++)
+    {
+        Nif::NiKeyframeController *ctrl = ctrls[i];
+
+        maxtime = std::max(maxtime, ctrl->timeStop);
+
+        Nif::Named *target = dynamic_cast<Nif::Named*>(ctrl->target.getPtr());
+        if(target != NULL)
+            targets.push_back(target->name);
+
+        /* Get the keyframes and make sure they're sorted first to last */
+        Nif::NiKeyframeData *kf = ctrl->data.getPtr();
+        QuaternionKeyList quatkeys = kf->mRotations;
+        Vector3KeyList trankeys = kf->mTranslations;
+        FloatKeyList scalekeys = kf->mScales;
+        std::sort(quatkeys.mKeys.begin(), quatkeys.mKeys.end(), KeyTimeSort<Ogre::Quaternion>());
+        std::sort(trankeys.mKeys.begin(), trankeys.mKeys.end(), KeyTimeSort<Ogre::Vector3>());
+        std::sort(scalekeys.mKeys.begin(), scalekeys.mKeys.end(), KeyTimeSort<float>());
+
+    }
+
+    if(targets.size() != ctrls.size())
+    {
+        warn("Target size mismatch ("+Ogre::StringConverter::toString(targets.size())+" targets, "+
+             Ogre::StringConverter::toString(ctrls.size())+" controllers)");
+        return;
+    }
+
+    Ogre::Animation *anim = skel->createAnimation(skel->getName(), maxtime);
+    loadAnimation(skel, anim, 0.0f, maxtime, ctrls, targets);
 }
 
 bool createSkeleton(const std::string &name, const std::string &group, TextKeyMap *textkeys, const Nif::Node *node)
@@ -1100,13 +1139,6 @@ EntityList NIFLoader::createEntities(Ogre::SceneNode *parent, TextKeyMap *textke
 
     return entitylist;
 }
-
-struct checklow {
-    bool operator()(const char &a, const char &b) const
-    {
-        return ::tolower(a) == ::tolower(b);
-    }
-};
 
 EntityList NIFLoader::createEntities(Ogre::Entity *parent, const std::string &bonename,
                                      Ogre::SceneNode *parentNode,
