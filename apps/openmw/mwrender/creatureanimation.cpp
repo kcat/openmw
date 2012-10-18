@@ -60,7 +60,7 @@ CreatureAnimation::CreatureAnimation(const MWWorld::Ptr& ptr): Animation()
             while(as.hasMoreElements())
             {
                 Ogre::AnimationState *state = as.getNext();
-                state->setEnabled(true);
+                state->setEnabled(false);
                 state->setLoop(false);
             }
         }

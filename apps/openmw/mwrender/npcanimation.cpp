@@ -118,7 +118,7 @@ NpcAnimation::NpcAnimation(const MWWorld::Ptr& ptr, Ogre::SceneNode* node, MWWor
         while(as.hasMoreElements())
         {
             Ogre::AnimationState *state = as.getNext();
-            state->setEnabled(true);
+            state->setEnabled(false);
             state->setLoop(false);
         }
     }

@@ -188,17 +188,6 @@ void Animation::runAnimation(float timepassed)
         }
         else
             processGroup(mCurGroup, mTime);
-
-        if(mEntityList.mSkelBase)
-        {
-            Ogre::AnimationStateSet *aset = mEntityList.mSkelBase->getAllAnimationStates();
-            Ogre::AnimationStateIterator as = aset->getAnimationStateIterator();
-            while(as.hasMoreElements())
-            {
-                Ogre::AnimationState *state = as.getNext();
-                state->setTimePosition(mTime);
-            }
-        }
     }
     mSkipFrame = false;
 }
