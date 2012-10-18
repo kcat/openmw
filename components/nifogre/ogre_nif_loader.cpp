@@ -229,6 +229,47 @@ void buildBones(Ogre::Skeleton *skel, const Nif::Node *node, std::vector<Nif::Ni
 }
 
 
+static TextKeyMap::const_iterator findNextGroupStart(std::string &curgroup, TextKeyMap::const_iterator iter, const TextKeyMap &textkeys)
+{
+    for(;iter != textkeys.end();iter++)
+    {
+        const std::string &text = iter->second;
+        std::string::size_type pos = text.find(':');
+
+        if(pos == std::string::npos)
+            continue;
+
+        if(pos != curgroup.length() ||
+           std::mismatch(text.begin(), text.begin()+pos, curgroup.begin(), checklow()).second != curgroup.end())
+        {
+            curgroup = text.substr(0, pos);
+            std::transform(curgroup.begin(), curgroup.end(), curgroup.begin(), ::tolower);
+            break;
+        }
+    }
+    return iter;
+}
+
+static TextKeyMap::const_iterator findGroupEnd(const std::string &curgroup, const TextKeyMap &textkeys)
+{
+    TextKeyMap::const_iterator end = textkeys.end();
+    while(end-- != textkeys.begin())
+    {
+        const std::string &text = end->second;
+        std::string::size_type pos = text.find(':');
+
+        if(pos == std::string::npos)
+            continue;
+
+        if(pos == curgroup.length() &&
+           std::mismatch(text.begin(), text.begin()+pos, curgroup.begin(), checklow()).second == curgroup.end())
+            return end;
+    }
+
+    throw std::runtime_error("Failed to find group end for "+curgroup);
+}
+
+
 static void loadAnimation(Ogre::Skeleton *skel, Ogre::Animation *anim, float startTime, float endTime, const std::vector<Nif::NiKeyframeController*> &ctrls, const std::vector<std::string> &targets)
 {
     OgreAssert(startTime >= 0.0f && startTime <= endTime, "Invalid start time");
@@ -406,8 +447,28 @@ void loadResource(Ogre::Resource *resource)
         return;
     }
 
-    Ogre::Animation *anim = skel->createAnimation(skel->getName(), maxtime);
+    Ogre::Animation *anim = skel->createAnimation("all", maxtime);
     loadAnimation(skel, anim, 0.0f, maxtime, ctrls, targets);
+
+    std::string curgroup;
+    TextKeyMap::const_iterator grpstart = textkeys.begin();
+    TextKeyMap::const_iterator grpend = textkeys.begin();
+    while((grpstart=findNextGroupStart(curgroup, grpstart, textkeys)) != textkeys.end())
+    {
+        grpend = findGroupEnd(curgroup, textkeys);
+        if(grpend == textkeys.end())
+            break;
+
+        /* NOTE: Animation groups that are within other animation groups (e.g.
+         * swimdeathknockdown within swimknockdown) will cause the original group
+         * to be re-detected. Don't try to define the same animation again if this
+         * happens. */
+        if(skel->hasAnimation(curgroup))
+            continue;
+
+        anim = skel->createAnimation(curgroup, grpend->first);
+        loadAnimation(skel, anim, grpstart->first, grpend->first, ctrls, targets);
+    }
 }
 
 bool createSkeleton(const std::string &name, const std::string &group, TextKeyMap *textkeys, const Nif::Node *node)
