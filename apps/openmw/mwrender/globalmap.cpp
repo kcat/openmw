@@ -53,7 +53,7 @@ namespace MWRender
         {
             Ogre::Image image;
 
-            Ogre::uchar data[mWidth * mHeight * 3];
+            std::vector<Ogre::uchar> data (mWidth * mHeight * 3);
 
             for (int x = mMinX; x <= mMaxX; ++x)
             {
@@ -63,9 +63,9 @@ namespace MWRender
 
                     if (land)
                     {
-                        if (!land->dataLoaded)
+                        if (!land->isDataLoaded(ESM::Land::DATA_VHGT))
                         {
-                            land->loadData();
+                            land->loadData(ESM::Land::DATA_VHGT);
                         }
                     }
 
@@ -93,7 +93,7 @@ namespace MWRender
 
                             if (land)
                             {
-                                float landHeight = land->landData->heights[vertexY * ESM::Land::LAND_SIZE + vertexX];
+                                float landHeight = land->mLandData->mHeights[vertexY * ESM::Land::LAND_SIZE + vertexX];
 
 
                                 if (landHeight >= 0)
@@ -150,7 +150,7 @@ namespace MWRender
                 }
             }
 
-            image.loadDynamicImage (data, mWidth, mHeight, Ogre::PF_B8G8R8);
+            image.loadDynamicImage (&data[0], mWidth, mHeight, Ogre::PF_B8G8R8);
 
             //image.save (mCacheDir + "/GlobalMap.png");
 

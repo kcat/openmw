@@ -64,6 +64,9 @@ namespace MWGui
   class LoadingScreen;
   class LevelupDialog;
   class WaitDialog;
+  class SpellCreationDialog;
+  class EnchantingDialog;
+  class TrainingWindow;
 
   class WindowManager : public MWBase::WindowManager
   {
@@ -111,6 +114,7 @@ namespace MWGui
     virtual MWGui::ConfirmationDialog* getConfirmationDialog();
     virtual MWGui::TradeWindow* getTradeWindow();
     virtual MWGui::SpellBuyingWindow* getSpellBuyingWindow();
+    virtual MWGui::TravelWindow* getTravelWindow();
     virtual MWGui::SpellWindow* getSpellWindow();
     virtual MWGui::Console* getConsole();
 
@@ -196,7 +200,7 @@ namespace MWGui
      * @param id Identifier for the GMST setting, e.g. "aName"
      * @param default Default value if the GMST setting cannot be used.
      */
-    virtual const std::string &getGameSettingString(const std::string &id, const std::string &default_);
+    virtual std::string getGameSettingString(const std::string &id, const std::string &default_);
 
     virtual void processChangedSettings(const Settings::CategorySettingVector& changed);
 
@@ -209,6 +213,11 @@ namespace MWGui
     virtual bool getRestEnabled() { return mRestAllowed; }
 
     virtual bool getPlayerSleeping();
+    virtual void wakeUpPlayer();
+
+    virtual void startSpellMaking(MWWorld::Ptr actor);
+    virtual void startEnchanting(MWWorld::Ptr actor);
+    virtual void startTraining(MWWorld::Ptr actor);
 
   private:
     OEngine::GUI::MyGUIManager *mGuiManager;
@@ -229,6 +238,7 @@ namespace MWGui
     CountDialog* mCountDialog;
     TradeWindow* mTradeWindow;
     SpellBuyingWindow* mSpellBuyingWindow;
+    TravelWindow* mTravelWindow;
     SettingsWindow* mSettingsWindow;
     ConfirmationDialog* mConfirmationDialog;
     AlchemyWindow* mAlchemyWindow;
@@ -237,6 +247,9 @@ namespace MWGui
     LoadingScreen* mLoadingScreen;
     LevelupDialog* mLevelupDialog;
     WaitDialog* mWaitDialog;
+    SpellCreationDialog* mSpellCreationDialog;
+    EnchantingDialog* mEnchantingDialog;
+    TrainingWindow* mTrainingWindow;
 
     CharacterCreation* mCharGen;
 
