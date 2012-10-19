@@ -86,48 +86,51 @@ bool Animation::findGroupInfo(const std::string &groupname, const std::string &b
 
 void Animation::processGroup(Group &group, float time)
 {
-    while(time >= group.mNext->first)
+    while(group.mNext != mTextKeys.end() && time >= group.mNext->first)
     {
         // TODO: Process group.mNext->second
-        if(++group.mNext == mTextKeys.end())
-            break;
+        group.mNext++;
     }
 }
 
 
 void Animation::playAnim(const std::string &groupname, const std::string &begin, const std::string &end)
 {
-    Group group;
-    group.mLoops = 1;
-
-    if(!findGroupInfo(groupname, begin, begin, end, end, &group))
-        throw std::runtime_error("Failed to find animation group "+groupname);
-
-    mCurGroup = group;
-    mNextGroup.mLoops = 0;
-    mTime = mCurGroup.mStart->first;
+    loopAnim(groupname, begin, begin, end, end, 1);
 }
 
 void Animation::loopAnim(const std::string &groupname,
                 const std::string &begin, const std::string &beginloop,
                 const std::string &endloop, const std::string &end, int loops)
 {
+    if(!mEntityList.mSkelBase)
+        throw std::runtime_error("No skeleton on actor");
+
     Group group;
     group.mLoops = loops;
+    group.mState = mEntityList.mSkelBase->getAnimationState(groupname);
 
     if(!findGroupInfo(groupname, begin, beginloop, endloop, end, &group))
-        throw std::runtime_error("Failed to find animation group "+groupname);
+        throw std::runtime_error("Failed to find info for animation group "+groupname);
 
+    if(mCurGroup.mState)
+        mCurGroup.mState->setEnabled(false);
     mCurGroup = group;
-    mNextGroup.mLoops = 0;
+    mCurGroup.mState->setEnabled(true);
+    mNextGroup.mState = 0;
     mTime = mCurGroup.mStart->first;
 }
 
 
 void Animation::playGroup(std::string groupname, int mode, int loops)
 {
+    if(!mEntityList.mSkelBase)
+        throw std::runtime_error("No skeleton on actor");
+    std::transform(groupname.begin(), groupname.end(), groupname.begin(), ::tolower);
+
     Group group;
     group.mLoops = loops;
+    group.mState = mEntityList.mSkelBase->getAnimationState(groupname);
 
     if(groupname == "all")
     {
@@ -142,14 +145,17 @@ void Animation::playGroup(std::string groupname, int mode, int loops)
         }
     }
     else if(!findGroupInfo(groupname, "start", "start loop", "stop loop", "stop", &group))
-        throw std::runtime_error("Failed to find animation group "+groupname);
+        throw std::runtime_error("Failed to find info for animation group "+groupname);
 
-    if(mode == 0 && mCurGroup.mLoops > 0)
+    if(mode == 0 && mCurGroup.mState)
         mNextGroup = group;
     else
     {
+        if(mCurGroup.mState)
+            mCurGroup.mState->setEnabled(false);
         mCurGroup = group;
-        mNextGroup.mLoops = 0;
+        mCurGroup.mState->setEnabled(true);
+        mNextGroup.mState = 0;
         mTime = ((mode==2) ? mCurGroup.mLoopStart->first : mCurGroup.mStart->first);
     }
 }
@@ -161,7 +167,7 @@ void Animation::skipAnim()
 
 void Animation::runAnimation(float timepassed)
 {
-    if(mCurGroup.mLoops > 0 && !mSkipFrame)
+    if(mCurGroup.mState && !mSkipFrame)
     {
         mTime += timepassed;
     do_more:
@@ -176,18 +182,21 @@ void Animation::runAnimation(float timepassed)
         if(mCurGroup.mLoops <= 1 && mTime >= mCurGroup.mStop->first)
         {
             processGroup(mCurGroup, mCurGroup.mStop->first);
-            if(mNextGroup.mLoops > 0)
+            if(mNextGroup.mState)
             {
                 mTime = mTime - mCurGroup.mStop->first + mNextGroup.mStart->first;
+                mCurGroup.mState->setEnabled(false);
                 mCurGroup = mNextGroup;
-                mNextGroup.mLoops = 0;
+                mCurGroup.mState->setEnabled(true);
+                mNextGroup.mState = 0;
                 goto do_more;
             }
             mTime = mCurGroup.mStop->first;
-            mCurGroup.mLoops = 0;
         }
         else
             processGroup(mCurGroup, mTime);
+
+        mCurGroup.mState->setTimePosition(mTime);
     }
     mSkipFrame = false;
 }

@@ -25,7 +25,9 @@ class Animation {
 
         size_t mLoops;
 
-        Group() : mLoops(0)
+        Ogre::AnimationState *mState;
+
+        Group() : mLoops(0), mState(0)
         { }
     };
 
