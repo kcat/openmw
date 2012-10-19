@@ -327,24 +327,20 @@ void NpcAnimation::updateParts()
     {
         if(mPartPriorities[PartTypeList[i].type] < 1)
         {
-            const ESM::BodyPart *part = NULL;
             bool tryfemale = isFemale;
-            int ni = 0;
             do {
-                part = store.bodyParts.search(bodyRaceID+(tryfemale?"_f_":"_m_")+PartTypeList[i].name[ni]);
-                if(part) break;
-
-                ni ^= 1;
-                if(ni == 0)
+                const ESM::BodyPart *part;
+                part = store.bodyParts.search(bodyRaceID+(tryfemale?"_f_":"_m_")+PartTypeList[i].name[0]);
+                if(!part && PartTypeList[i].name[1][0])
+                    part = store.bodyParts.search(bodyRaceID+(tryfemale?"_f_":"_m_")+PartTypeList[i].name[1]);
+                if(part)
                 {
-                    if(!tryfemale)
-                        break;
-                    tryfemale = false;
+                    addOrReplaceIndividualPart(PartTypeList[i].type, -1,1, "meshes\\"+part->mModel);
+                    break;
                 }
-            } while(1);
 
-            if(part)
-                addOrReplaceIndividualPart(PartTypeList[i].type, -1,1, "meshes\\"+part->mModel);
+                tryfemale = !tryfemale;
+            } while(!tryfemale);
         }
     }
 }
