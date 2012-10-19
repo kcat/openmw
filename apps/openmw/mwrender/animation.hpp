@@ -50,6 +50,8 @@ protected:
                        const std::string &endloop, const std::string &end,
                        Animation::Group *group);
 
+    void createEntityList(Ogre::SceneNode *node, const std::string model);
+
 public:
     Animation();
     virtual ~Animation();
