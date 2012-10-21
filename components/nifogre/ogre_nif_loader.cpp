@@ -437,7 +437,6 @@ void loadResource(Ogre::Resource *resource)
         std::sort(quatkeys.mKeys.begin(), quatkeys.mKeys.end(), KeyTimeSort<Ogre::Quaternion>());
         std::sort(trankeys.mKeys.begin(), trankeys.mKeys.end(), KeyTimeSort<Ogre::Vector3>());
         std::sort(scalekeys.mKeys.begin(), scalekeys.mKeys.end(), KeyTimeSort<float>());
-
     }
 
     if(targets.size() != ctrls.size())
