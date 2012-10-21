@@ -198,7 +198,7 @@ void Animation::playGroup(std::string groupname, int mode, int loops)
             group.mLoopStop = group.mStop = --iter;
         }
     }
-    else if(!findGroupInfo(groupname, "start", "start loop", "stop loop", "stop", &group))
+    else if(!findGroupInfo(groupname, "start", "loop start", "loop stop", "stop", &group))
         throw std::runtime_error("Failed to find info for animation group "+groupname);
 
     if(mode == 0 && mCurGroup.mState)
