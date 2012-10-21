@@ -11,6 +11,35 @@
 namespace MWRender
 {
 
+void Animation::Group::readyAnimation(Ogre::Entity *ent, const std::string &groupname)
+{
+    mState = ent->getAnimationState(groupname);
+
+    Ogre::SkeletonInstance *skel = ent->getSkeleton();
+    Ogre::Animation *anim = skel->getAnimation(groupname);
+    /* FIXME: Not all skeletons have a Bip01 node, creatures for instance use a different name. We
+     * should probably be using the skeleton root bone, but the current Ogre NIF loader will create
+     * bones before the first animated bone. */
+    if(anim && skel->hasBone("Bip01"))
+    {
+        unsigned short handle = skel->getBone("Bip01")->getHandle();
+        if(anim->hasNodeTrack(handle))
+        {
+            Ogre::NodeAnimationTrack *track = anim->getNodeTrack(handle);
+            int numkfs = track->getNumKeyFrames();
+            if(numkfs > 1)
+            {
+                Ogre::TransformKeyFrame *startframe = track->getNodeKeyFrame(0);
+                Ogre::TransformKeyFrame *endframe = track->getNodeKeyFrame(numkfs-1);
+
+                mVelocity = (endframe->getTranslate() - startframe->getTranslate()) /
+                            (endframe->getTime() - startframe->getTime());
+            }
+        }
+    }
+}
+
+
 Animation::Animation()
     : mInsert(NULL)
     , mTime(0.0f)
@@ -133,7 +162,7 @@ void Animation::loopAnim(const std::string &groupname,
 
     Group group;
     group.mLoops = loops;
-    group.mState = mEntityList.mSkelBase->getAnimationState(groupname);
+    group.readyAnimation(mEntityList.mSkelBase, groupname);
 
     if(!findGroupInfo(groupname, begin, beginloop, endloop, end, &group))
         throw std::runtime_error("Failed to find info for animation group "+groupname);
@@ -155,7 +184,7 @@ void Animation::playGroup(std::string groupname, int mode, int loops)
 
     Group group;
     group.mLoops = loops;
-    group.mState = mEntityList.mSkelBase->getAnimationState(groupname);
+    group.readyAnimation(mEntityList.mSkelBase, groupname);
 
     if(groupname == "all")
     {

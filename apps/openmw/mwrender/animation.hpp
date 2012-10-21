@@ -26,9 +26,12 @@ class Animation {
         size_t mLoops;
 
         Ogre::AnimationState *mState;
+        Ogre::Vector3 mVelocity;
 
-        Group() : mLoops(0), mState(0)
+        Group() : mLoops(0), mState(0), mVelocity(0.0f)
         { }
+
+        void readyAnimation(Ogre::Entity *ent, const std::string &groupname);
     };
 
     void processGroup(Group &group, float time);
