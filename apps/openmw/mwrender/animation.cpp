@@ -41,7 +41,7 @@ struct checklow {
 
 void Animation::createEntityList(Ogre::SceneNode *node, const std::string model)
 {
-    mInsert = node;
+    mInsert = node->createChildSceneNode();
     assert(mInsert);
 
     mEntityList = NifOgre::NIFLoader::createEntities(mInsert, &mTextKeys, model);
