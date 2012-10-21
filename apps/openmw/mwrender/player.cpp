@@ -132,8 +132,7 @@ namespace MWRender
             mAnimation->runAnimation(duration);
         }
         mPlayerNode->setVisible(
-            mVanity.enabled || mPreviewMode || !mFirstPersonView,
-            false
+            mVanity.enabled || mPreviewMode || !mFirstPersonView
         );
 
         if (mFirstPersonView && !mVanity.enabled) {
