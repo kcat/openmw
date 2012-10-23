@@ -201,7 +201,7 @@ void Animation::playGroup(std::string groupname, int mode, int loops)
         NifOgre::TextKeyMap::const_iterator iter = mTextKeys.begin();
         if(iter != mTextKeys.end())
         {
-            group.mBase = group.mStart = group.mLoopStart = iter;
+            group.mBase = group.mStart = group.mLoopStart = group.mNext = iter;
             iter = mTextKeys.end();
             group.mLoopStop = group.mStop = --iter;
         }
@@ -218,7 +218,9 @@ void Animation::playGroup(std::string groupname, int mode, int loops)
         mCurGroup = group;
         mCurGroup.mState->setEnabled(true);
         mNextGroup.mState = 0;
-        mTime = ((mode==2) ? mCurGroup.mLoopStart->first : mCurGroup.mStart->first);
+        if(mode == 2)
+            mCurGroup.mNext = mCurGroup.mLoopStart;
+        mTime = mCurGroup.mNext->first;
     }
 }
 
