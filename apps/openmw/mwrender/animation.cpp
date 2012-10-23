@@ -261,6 +261,7 @@ void Animation::runAnimation(float timepassed)
             processGroup(mCurGroup, mTime);
 
         mCurGroup.mState->setTimePosition(mTime);
+        mInsert->setPosition(mCurGroup.mVelocity * -(mTime - mCurGroup.mBase->first));
     }
     mSkipFrame = false;
 }
