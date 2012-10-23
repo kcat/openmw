@@ -108,8 +108,8 @@ bool Animation::findGroupInfo(const std::string &groupname, const std::string &b
         std::string::const_iterator strend = iter->second.end();
         size_t strlen = strend-strpos;
 
-        if(groupname.length() >= strlen ||
-           *std::mismatch(strpos, strend, groupname.begin(), checklow()).first != ':')
+        if(iter->second.find(':') != groupname.length() ||
+           std::mismatch(strpos, strend, groupname.begin(), checklow()).second != groupname.end())
             continue;
 
         if(group->mBase == mTextKeys.end())
