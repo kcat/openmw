@@ -16,6 +16,8 @@ namespace MWRender {
 
 class Animation {
     struct Group {
+        NifOgre::TextKeyMap::const_iterator mBase;
+
         NifOgre::TextKeyMap::const_iterator mStart;
         NifOgre::TextKeyMap::const_iterator mStop;
         NifOgre::TextKeyMap::const_iterator mLoopStart;

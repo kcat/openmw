@@ -90,6 +90,7 @@ void Animation::createEntityList(Ogre::SceneNode *node, const std::string model)
 
 bool Animation::findGroupInfo(const std::string &groupname, const std::string &begin, const std::string &beginloop, const std::string &endloop, const std::string &end, Animation::Group *group)
 {
+    group->mBase = mTextKeys.end();
     group->mStart = mTextKeys.end();
     group->mLoopStart = mTextKeys.end();
     group->mLoopStop = mTextKeys.end();
@@ -106,6 +107,13 @@ bool Animation::findGroupInfo(const std::string &groupname, const std::string &b
         std::string::const_iterator strpos = iter->second.begin();
         std::string::const_iterator strend = iter->second.end();
         size_t strlen = strend-strpos;
+
+        if(groupname.length() >= strlen ||
+           *std::mismatch(strpos, strend, groupname.begin(), checklow()).first != ':')
+            continue;
+
+        if(group->mBase == mTextKeys.end())
+            group->mBase = iter;
 
         if(start.size() <= strlen && std::mismatch(strpos, strend, start.begin(), checklow()).first == strend)
         {
@@ -188,12 +196,12 @@ void Animation::playGroup(std::string groupname, int mode, int loops)
 
     if(groupname == "all")
     {
-        group.mStart = group.mLoopStart = group.mLoopStop = group.mStop = mTextKeys.end();
+        group.mBase = group.mStart = group.mLoopStart = group.mLoopStop = group.mStop = mTextKeys.end();
 
         NifOgre::TextKeyMap::const_iterator iter = mTextKeys.begin();
         if(iter != mTextKeys.end())
         {
-            group.mStart = group.mLoopStart = iter;
+            group.mBase = group.mStart = group.mLoopStart = iter;
             iter = mTextKeys.end();
             group.mLoopStop = group.mStop = --iter;
         }
