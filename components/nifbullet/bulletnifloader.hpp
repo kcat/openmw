@@ -50,12 +50,7 @@ namespace NifBullet
 class ManualBulletShapeLoader : public OEngine::Physic::BulletShapeLoader
 {
 public:
-    ManualBulletShapeLoader()
-      : mShape(NULL)
-      , mBoundingBox(NULL)
-      , mHasShape(false)
-    {
-    }
+    ManualBulletShapeLoader() { }
 
     virtual ~ManualBulletShapeLoader();
 
@@ -88,7 +83,9 @@ private:
     /**
     *Parse a node.
     */
-    void handleNode(btTriangleMesh* mesh, Nif::Node const *node, int flags, bool isCollisionNode, bool raycasting, bool isMarker);
+    void handleNode(OEngine::Physic::BulletShape *shape, btTriangleMesh* mesh,
+                    Nif::Node const *node, int flags, bool isCollisionNode, bool raycasting,
+                    bool isMarker);
 
     /**
     *Helper function
@@ -99,13 +96,6 @@ private:
     *convert a NiTriShape to a bullet trishape.
     */
     void handleNiTriShape(btTriangleMesh* mesh, const Nif::NiTriShape *shape, int flags, const Ogre::Matrix4 &transform, bool raycasting);
-
-    std::string mResourceName;
-
-    OEngine::Physic::BulletShape* mShape;//current shape
-    btBoxShape *mBoundingBox;
-
-    bool mHasShape;
 };
 
 }
