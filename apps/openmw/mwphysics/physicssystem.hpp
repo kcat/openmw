@@ -1,8 +1,14 @@
-#ifndef GAME_MWWORLD_PHYSICSSYSTEM_H
-#define GAME_MWWORLD_PHYSICSSYSTEM_H
+#ifndef MWPHYSICS_PHYSICSSYSTEM_H
+#define MWPHYSICS_PHYSICSSYSTEM_H
 
-#include <OgreVector3.h>
+#include <vector>
+#include <string>
 
+namespace Ogre
+{
+    class Vector3;
+    class Quaternion;
+}
 
 class btDefaultCollisionConfiguration;
 class btCollisionDispatcher;
@@ -11,14 +17,6 @@ class btBroadphaseInterface;
 class btSequentialImpulseConstraintSolver;
 class btDiscreteDynamicsWorld;
 
-
-namespace OEngine
-{
-    namespace Render
-    {
-        class OgreRenderer;
-    }
-}
 
 namespace MWWorld
 {
@@ -94,14 +92,13 @@ namespace MWPhysics
             const PtrVelocityList& applyQueuedMovement(float dt);
 
         private:
-
             PtrVelocityList mMovementQueue;
             PtrVelocityList mMovementResults;
 
             float mTimeAccum;
 
-            PhysicsSystem (const PhysicsSystem&);
-            PhysicsSystem& operator= (const PhysicsSystem&);
+            PhysicsSystem(const PhysicsSystem&);
+            PhysicsSystem& operator=(const PhysicsSystem&);
     };
 }
 

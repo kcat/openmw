@@ -1,6 +1,8 @@
 
 #include "creature.hpp"
 
+#include <OgreVector3.h>
+
 #include <components/esm/loadcrea.hpp>
 
 #include "../mwmechanics/creaturestats.hpp"

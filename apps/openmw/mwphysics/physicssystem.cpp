@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+#include <OgreVector3.h>
+
 #include <btBulletDynamicsCommon.h>
 
 #include "../mwbase/environment.hpp"
@@ -16,11 +18,8 @@ namespace MWPhysics
         mDispatcher = new btCollisionDispatcher(mCollisionConfiguration);
 
         mSolver = new btSequentialImpulseConstraintSolver();
-
         mPairCache = new btSortedOverlappingPairCache();
-
         mBroadphase = new btDbvtBroadphase();
-
         mDynamicsWorld = new btDiscreteDynamicsWorld(mDispatcher, mBroadphase, mSolver, mCollisionConfiguration);
         mDynamicsWorld->setGravity(btVector3(0.0f, 0.0f, -627.2f));
     }
