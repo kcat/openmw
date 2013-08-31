@@ -26,10 +26,11 @@
 #include "../mwworld/failedaction.hpp"
 #include "../mwworld/inventorystore.hpp"
 #include "../mwworld/customdata.hpp"
-#include "../mwworld/physicssystem.hpp"
 
 #include "../mwrender/actors.hpp"
 #include "../mwrender/renderinginterface.hpp"
+
+#include "../mwphysics/physicssystem.hpp"
 
 #include "../mwgui/tooltips.hpp"
 
@@ -256,7 +257,7 @@ namespace MWClass
         renderingInterface.getActors().insertNPC(ptr, getInventoryStore(ptr));
     }
 
-    void Npc::insertObject(const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem& physics) const
+    void Npc::insertObject(const MWWorld::Ptr& ptr, MWPhysics::PhysicsSystem& physics) const
     {
         physics.addActor(ptr);
         MWBase::Environment::get().getMechanicsManager()->add(ptr);

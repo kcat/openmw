@@ -16,13 +16,14 @@
 #include "../mwworld/actionteleport.hpp"
 #include "../mwworld/actiondoor.hpp"
 #include "../mwworld/cellstore.hpp"
-#include "../mwworld/physicssystem.hpp"
 #include "../mwworld/inventorystore.hpp"
 
 #include "../mwgui/tooltips.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
+
+#include "../mwphysics/physicssystem.hpp"
 
 namespace MWClass
 {
@@ -34,7 +35,7 @@ namespace MWClass
         }
     }
 
-    void Door::insertObject(const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem& physics) const
+    void Door::insertObject(const MWWorld::Ptr& ptr, MWPhysics::PhysicsSystem& physics) const
     {
         const std::string model = getModel(ptr);
         if(!model.empty())

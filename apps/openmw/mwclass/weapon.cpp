@@ -12,13 +12,14 @@
 #include "../mwworld/actionequip.hpp"
 #include "../mwworld/inventorystore.hpp"
 #include "../mwworld/cellstore.hpp"
-#include "../mwworld/physicssystem.hpp"
 #include "../mwworld/nullaction.hpp"
 
 #include "../mwgui/tooltips.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
+
+#include "../mwphysics/physicssystem.hpp"
 
 namespace MWClass
 {
@@ -37,7 +38,7 @@ namespace MWClass
         }
     }
 
-    void Weapon::insertObject(const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem& physics) const
+    void Weapon::insertObject(const MWWorld::Ptr& ptr, MWPhysics::PhysicsSystem& physics) const
     {
         const std::string model = getModel(ptr);
         if(!model.empty())

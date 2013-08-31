@@ -11,11 +11,12 @@
 #include "../mwworld/actiontake.hpp"
 #include "../mwworld/actionalchemy.hpp"
 #include "../mwworld/cellstore.hpp"
-#include "../mwworld/physicssystem.hpp"
 #include "../mwworld/nullaction.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
+
+#include "../mwphysics/physicssystem.hpp"
 
 #include "../mwgui/tooltips.hpp"
 
@@ -29,7 +30,7 @@ namespace MWClass
         }
     }
 
-    void Apparatus::insertObject(const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem& physics) const
+    void Apparatus::insertObject(const MWWorld::Ptr& ptr, MWPhysics::PhysicsSystem& physics) const
     {
         const std::string model = getModel(ptr);
         if(!model.empty())

@@ -15,7 +15,6 @@
 #include "../mwworld/cellstore.hpp"
 #include "../mwworld/actionapply.hpp"
 #include "../mwworld/actionopen.hpp"
-#include "../mwworld/physicssystem.hpp"
 #include "../mwworld/player.hpp"
 #include "../mwworld/inventorystore.hpp"
 
@@ -23,6 +22,8 @@
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
+
+#include "../mwphysics/physicssystem.hpp"
 
 #include "../mwmechanics/npcstats.hpp"
 
@@ -68,7 +69,7 @@ namespace MWClass
         }
     }
 
-    void Container::insertObject(const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem& physics) const
+    void Container::insertObject(const MWWorld::Ptr& ptr, MWPhysics::PhysicsSystem& physics) const
     {
         const std::string model = getModel(ptr);
         if(!model.empty())

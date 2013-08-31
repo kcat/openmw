@@ -4,10 +4,11 @@
 #include <components/esm/loadstat.hpp>
 
 #include "../mwworld/ptr.hpp"
-#include "../mwworld/physicssystem.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
+
+#include "../mwphysics/physicssystem.hpp"
 
 namespace MWClass
 {
@@ -19,7 +20,7 @@ namespace MWClass
         }
     }
 
-    void Static::insertObject(const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem& physics) const
+    void Static::insertObject(const MWWorld::Ptr& ptr, MWPhysics::PhysicsSystem& physics) const
     {
         const std::string model = getModel(ptr);
         if(!model.empty())

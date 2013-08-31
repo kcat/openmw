@@ -2,8 +2,6 @@
 
 #include <OgreSceneNode.h>
 
-#include <libs/openengine/bullet/physic.hpp>
-
 #include <components/bsa/bsa_archive.hpp>
 #include <components/files/collections.hpp>
 #include <components/compiler/locals.hpp>
@@ -20,8 +18,11 @@
 #include "../mwmechanics/movement.hpp"
 #include "../mwmechanics/npcstats.hpp"
 
+#include "../mwrender/renderingmanager.hpp"
 #include "../mwrender/sky.hpp"
 #include "../mwrender/animation.hpp"
+
+#include "../mwphysics/physicssystem.hpp"
 
 #include "../mwclass/door.hpp"
 
@@ -170,12 +171,11 @@ namespace MWWorld
       mSky (true), mCells (mStore, mEsm),
       mActivationDistanceOverride (mActivationDistanceOverride),
       mFallback(fallbackMap), mPlayIntro(0), mTeleportEnabled(true),
-      mFacedDistance(FLT_MAX)
+      mFacedDistance(std::numeric_limits<float>::max())
     {
-        mPhysics = new PhysicsSystem();
-        mPhysEngine = mPhysics->getEngine();
+        mPhysics = new MWPhysics::PhysicsSystem();
 
-        mRendering = new MWRender::RenderingManager(renderer, resDir, cacheDir, mPhysEngine, &mFallback);
+        mRendering = new MWRender::RenderingManager(renderer, resDir, cacheDir, &mFallback);
 
         mWeatherManager = new MWWorld::WeatherManager(mRendering,&mFallback);
 
@@ -228,7 +228,7 @@ namespace MWWorld
 
         mGlobalVariables = new Globals (mStore);
 
-        mWorldScene = new Scene(*mRendering, mPhysics);
+        mWorldScene = new Scene(*mRendering, *mPhysics);
     }
 
     void World::startNewGame()
@@ -1096,9 +1096,9 @@ namespace MWWorld
 
         processDoors(duration);
 
-        const PtrVelocityList &results = mPhysics->applyQueuedMovement(duration);
-        PtrVelocityList::const_iterator player(results.end());
-        for(PtrVelocityList::const_iterator iter(results.begin());iter != results.end();iter++)
+        const MWPhysics::PtrVelocityList &results = mPhysics->applyQueuedMovement(duration);
+        MWPhysics::PtrVelocityList::const_iterator player(results.end());
+        for(MWPhysics::PtrVelocityList::const_iterator iter(results.begin());iter != results.end();iter++)
         {
             if(iter->first.getRefData().getHandle() == "player")
             {

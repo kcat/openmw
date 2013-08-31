@@ -5,8 +5,6 @@
 
 #include <btBulletCollisionCommon.h>
 
-#include "ptr.hpp"
-
 
 namespace OEngine
 {
@@ -14,17 +12,17 @@ namespace OEngine
     {
         class OgreRenderer;
     }
-    namespace Physic
-    {
-        class PhysicEngine;
-    }
 }
 
 namespace MWWorld
 {
+    class Ptr;
     class World;
+}
 
-    typedef std::vector<std::pair<Ptr,Ogre::Vector3> > PtrVelocityList;
+namespace MWPhysics
+{
+    typedef std::vector<std::pair<MWWorld::Ptr,Ogre::Vector3> > PtrVelocityList;
 
     class PhysicsSystem
     {
@@ -73,13 +71,11 @@ namespace MWWorld
             std::pair<bool,Ogre::Vector3> castRay(float mouseX, float mouseY);
             ///< cast ray from the mouse, return true if it hit something and the first result (in OGRE coordinates)
 
-            OEngine::Physic::PhysicEngine* getEngine();
-
             bool getObjectAABB(const MWWorld::Ptr &ptr, Ogre::Vector3 &min, Ogre::Vector3 &max);
 
             /// Queues velocity movement for a Ptr. If a Ptr is already queued, its velocity will
             /// be overwritten. Valid until the next call to applyQueuedMovement.
-            void queueObjectMovement(const Ptr &ptr, const Ogre::Vector3 &velocity);
+            void queueObjectMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &velocity);
 
             const PtrVelocityList& applyQueuedMovement(float dt);
 

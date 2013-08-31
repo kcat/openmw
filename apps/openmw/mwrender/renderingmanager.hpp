@@ -62,8 +62,7 @@ private:
 
 public:
     RenderingManager(OEngine::Render::OgreRenderer& _rend, const boost::filesystem::path& resDir,
-                     const boost::filesystem::path& cacheDir, OEngine::Physic::PhysicEngine* engine,
-                     MWWorld::Fallback* fallback);
+                     const boost::filesystem::path& cacheDir, MWWorld::Fallback* fallback);
     virtual ~RenderingManager();
 
     void togglePOV()
@@ -258,8 +257,6 @@ private:
     Ogre::ColourValue mFogColour;
     float mFogStart;
     float mFogEnd;
-
-    OEngine::Physic::PhysicEngine* mPhysicsEngine;
 
     MWRender::Camera *mCamera;
 

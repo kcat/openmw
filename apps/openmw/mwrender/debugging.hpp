@@ -2,22 +2,14 @@
 #define _GAME_RENDER_MWSCENE_H
 
 #include <utility>
-#include <openengine/ogre/renderer.hpp>
 
 #include <vector>
 #include <string>
+#include <map>
 
 namespace ESM
 {
     struct Pathgrid;
-}
-
-namespace OEngine
-{
-    namespace Physic
-    {
-        class PhysicEngine;
-    }
 }
 
 namespace Ogre
@@ -29,6 +21,7 @@ namespace Ogre
     class RaySceneQuery;
     class Quaternion;
     class Vector3;
+    class ManualObject;
 }
 
 namespace MWWorld
@@ -41,7 +34,6 @@ namespace MWRender
 {
     class Debugging
     {
-        OEngine::Physic::PhysicEngine* mEngine;
         Ogre::SceneManager *mSceneMgr;
 
         // Path grid stuff
@@ -75,8 +67,9 @@ namespace MWRender
         // path grid meshes
         Ogre::ManualObject *createPathgridLines(const ESM::Pathgrid *pathgrid);
         Ogre::ManualObject *createPathgridPoints(const ESM::Pathgrid *pathgrid);
+
     public:
-        Debugging(Ogre::SceneNode* root, OEngine::Physic::PhysicEngine *engine);
+        Debugging(Ogre::SceneNode* root);
         ~Debugging();
         bool toggleRenderMode (int mode);
 

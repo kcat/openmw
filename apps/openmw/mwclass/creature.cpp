@@ -19,10 +19,11 @@
 #include "../mwworld/failedaction.hpp"
 #include "../mwworld/customdata.hpp"
 #include "../mwworld/containerstore.hpp"
-#include "../mwworld/physicssystem.hpp"
 
 #include "../mwrender/renderinginterface.hpp"
 #include "../mwrender/actors.hpp"
+
+#include "../mwphysics/physicssystem.hpp"
 
 #include "../mwgui/tooltips.hpp"
 
@@ -122,7 +123,7 @@ namespace MWClass
         actors.insertCreature(ptr);
     }
 
-    void Creature::insertObject(const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem& physics) const
+    void Creature::insertObject(const MWWorld::Ptr& ptr, MWPhysics::PhysicsSystem& physics) const
     {
         const std::string model = getModel(ptr);
         if(!model.empty())

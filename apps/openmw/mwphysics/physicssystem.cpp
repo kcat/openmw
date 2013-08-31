@@ -6,7 +6,7 @@
 #include "../mwbase/world.hpp"
 
 
-namespace MWWorld
+namespace MWPhysics
 {
     PhysicsSystem::PhysicsSystem() : mTimeAccum(0.0f)
     {
@@ -14,11 +14,6 @@ namespace MWWorld
 
     PhysicsSystem::~PhysicsSystem()
     {
-    }
-
-    OEngine::Physic::PhysicEngine* PhysicsSystem::getEngine()
-    {
-        return NULL;
     }
 
     std::pair<float,std::string> PhysicsSystem::getFacedHandle(float queryDistance)
@@ -60,7 +55,7 @@ namespace MWWorld
         return std::make_pair(false, Ogre::Vector3(0.0f));
     }
 
-    std::vector<std::string> PhysicsSystem::getCollisions(const Ptr &ptr)
+    std::vector<std::string> PhysicsSystem::getCollisions(const MWWorld::Ptr &ptr)
     {
         return std::vector<std::string>();
     }
@@ -79,11 +74,11 @@ namespace MWWorld
     {
     }
 
-    void PhysicsSystem::addObject(const Ptr &ptr, bool placeable)
+    void PhysicsSystem::addObject(const MWWorld::Ptr &ptr, bool placeable)
     {
     }
 
-    void PhysicsSystem::addActor(const Ptr &ptr)
+    void PhysicsSystem::addActor(const MWWorld::Ptr &ptr)
     {
     }
 
@@ -91,15 +86,15 @@ namespace MWWorld
     {
     }
 
-    void PhysicsSystem::moveObject(const Ptr& ptr)
+    void PhysicsSystem::moveObject(const MWWorld::Ptr& ptr)
     {
     }
 
-    void PhysicsSystem::rotateObject(const Ptr& ptr)
+    void PhysicsSystem::rotateObject(const MWWorld::Ptr& ptr)
     {
     }
 
-    void PhysicsSystem::scaleObject(const Ptr& ptr)
+    void PhysicsSystem::scaleObject(const MWWorld::Ptr& ptr)
     {
     }
 
@@ -114,7 +109,7 @@ namespace MWWorld
     }
 
 
-    void PhysicsSystem::queueObjectMovement(const Ptr &ptr, const Ogre::Vector3 &movement)
+    void PhysicsSystem::queueObjectMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &movement)
     {
         PtrVelocityList::iterator iter = mMovementQueue.begin();
         for(;iter != mMovementQueue.end();iter++)

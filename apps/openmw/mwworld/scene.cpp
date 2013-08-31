@@ -12,7 +12,10 @@
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
-#include "physicssystem.hpp"
+#include "../mwrender/renderingmanager.hpp"
+
+#include "../mwphysics/physicssystem.hpp"
+
 #include "player.hpp"
 #include "localscripts.hpp"
 #include "esmstore.hpp"
@@ -25,7 +28,7 @@ namespace
 
     template<typename T>
     void insertCellRefList(MWRender::RenderingManager& rendering,
-        T& cellRefList, MWWorld::CellStore &cell, MWWorld::PhysicsSystem& physics, bool rescale, Loading::Listener* loadingListener)
+        T& cellRefList, MWWorld::CellStore &cell, MWPhysics::PhysicsSystem& physics, bool rescale, Loading::Listener* loadingListener)
     {
         if (!cellRefList.mList.empty())
         {
@@ -93,7 +96,7 @@ namespace MWWorld
                 iter2!=functor.mHandles.end(); ++iter2)
             {
                 Ogre::SceneNode* node = *iter2;
-                mPhysics->removeObject (node->getName());
+                mPhysics.removeObject (node->getName());
             }
         }
 
@@ -105,7 +108,7 @@ namespace MWWorld
                     (*iter)->mCell->getGridY()
                 );
             if (land)
-                mPhysics->removeHeightField( (*iter)->mCell->getGridX(), (*iter)->mCell->getGridY() );
+                mPhysics.removeHeightField( (*iter)->mCell->getGridX(), (*iter)->mCell->getGridY() );
         }
 
         mRendering.removeCell(*iter);
@@ -136,7 +139,7 @@ namespace MWWorld
                         cell->mCell->getGridY()
                     );
                 if (land) {
-                    mPhysics->addHeightField (
+                    mPhysics.addHeightField (
                         land->mLandData->mHeights,
                         cell->mCell->getGridX(),
                         cell->mCell->getGridY(),
@@ -326,8 +329,8 @@ namespace MWWorld
     }
 
     //We need the ogre renderer and a scene node.
-    Scene::Scene (MWRender::RenderingManager& rendering, PhysicsSystem *physics)
-    : mCurrentCell (0), mCellChanged (false), mPhysics(physics), mRendering(rendering)
+    Scene::Scene(MWRender::RenderingManager &rendering, MWPhysics::PhysicsSystem &physics)
+      : mCurrentCell (0), mCellChanged (false), mPhysics(physics), mRendering(rendering)
     {
     }
 
@@ -476,33 +479,33 @@ namespace MWWorld
     void Scene::insertCell (Ptr::CellStore &cell, bool rescale, Loading::Listener* loadingListener)
     {
         // Loop through all references in the cell
-        insertCellRefList(mRendering, cell.mActivators, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mPotions, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mAppas, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mArmors, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mBooks, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mClothes, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mContainers, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mDoors, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mIngreds, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mCreatureLists, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mItemLists, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mLights, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mLockpicks, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mMiscItems, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mProbes, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mRepairs, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mStatics, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mWeapons, cell, *mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mActivators, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mPotions, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mAppas, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mArmors, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mBooks, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mClothes, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mContainers, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mDoors, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mIngreds, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mCreatureLists, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mItemLists, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mLights, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mLockpicks, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mMiscItems, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mProbes, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mRepairs, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mStatics, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mWeapons, cell, mPhysics, rescale, loadingListener);
         // Load NPCs and creatures _after_ everything else (important for adjustPosition to work correctly)
-        insertCellRefList(mRendering, cell.mCreatures, cell, *mPhysics, rescale, loadingListener);
-        insertCellRefList(mRendering, cell.mNpcs, cell, *mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mCreatures, cell, mPhysics, rescale, loadingListener);
+        insertCellRefList(mRendering, cell.mNpcs, cell, mPhysics, rescale, loadingListener);
     }
 
     void Scene::addObjectToScene (const Ptr& ptr)
     {
         mRendering.addObject(ptr);
-        MWWorld::Class::get(ptr).insertObject(ptr, *mPhysics);
+        MWWorld::Class::get(ptr).insertObject(ptr, mPhysics);
         MWBase::Environment::get().getWorld()->rotateObject(ptr, 0, 0, 0, true);
         MWBase::Environment::get().getWorld()->scaleObject(ptr, ptr.getCellRef().mScale);
     }
@@ -511,7 +514,7 @@ namespace MWWorld
     {
         MWBase::Environment::get().getMechanicsManager()->remove (ptr);
         MWBase::Environment::get().getSoundManager()->stopSound3D (ptr);
-        mPhysics->removeObject (ptr.getRefData().getHandle());
+        mPhysics.removeObject (ptr.getRefData().getHandle());
         mRendering.removeObject (ptr);
     }
 

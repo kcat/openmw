@@ -20,6 +20,10 @@ add_openmw_dir (mwrender
     terrainstorage
     )
 
+add_openmw_dir (mwphysics
+    physicssystem
+    )
+
 add_openmw_dir (mwinput
     inputmanagerimp
     )

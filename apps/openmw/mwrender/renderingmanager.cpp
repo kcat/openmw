@@ -21,8 +21,6 @@
 #include <extern/shiny/Main/Factory.hpp>
 #include <extern/shiny/Platforms/Ogre/OgrePlatform.hpp>
 
-#include <openengine/bullet/physic.hpp>
-
 #include <components/esm/loadstat.hpp>
 #include <components/settings/settings.hpp>
 #include <components/terrain/world.hpp>
@@ -56,8 +54,7 @@ using namespace Ogre;
 namespace MWRender {
 
 RenderingManager::RenderingManager(OEngine::Render::OgreRenderer& _rend, const boost::filesystem::path& resDir,
-                                   const boost::filesystem::path& cacheDir, OEngine::Physic::PhysicEngine* engine,
-                                   MWWorld::Fallback* fallback)
+                                   const boost::filesystem::path& cacheDir, MWWorld::Fallback* fallback)
     : mRendering(_rend)
     , mFallback(fallback)
     , mObjects(mRendering)
@@ -65,7 +62,6 @@ RenderingManager::RenderingManager(OEngine::Render::OgreRenderer& _rend, const b
     , mPlayerAnimation(NULL)
     , mAmbientMode(0)
     , mSunEnabled(0)
-    , mPhysicsEngine(engine)
     , mTerrain(NULL)
 {
     // select best shader mode
@@ -178,7 +174,7 @@ RenderingManager::RenderingManager(OEngine::Render::OgreRenderer& _rend, const b
 
     mSun = 0;
 
-    mDebugging = new Debugging(mRootNode, engine);
+    mDebugging = new Debugging(mRootNode);
     mLocalMap = new MWRender::LocalMap(&mRendering, this);
 
     mWater = new MWRender::Water(mRendering.getCamera(), this);
@@ -347,10 +343,8 @@ void RenderingManager::update (float duration, bool paused)
         Ogre::Vector3 orig, dest;
         mCamera->getPosition(orig, dest);
 
-        btVector3 btOrig(orig.x, orig.y, orig.z);
-        btVector3 btDest(dest.x, dest.y, dest.z);
-        std::pair<bool,float> test = (!mPhysicsEngine ? std::make_pair(false, 0.0f) :
-                                      mPhysicsEngine->sphereCast(mRendering.getCamera()->getNearClipDistance()*2.5, btOrig, btDest));
+        // FIXME: Find point of collision for 3rd-person camera
+        std::pair<bool,float> test = std::make_pair(false, 0.0f);
         if(test.first)
             mCamera->setCameraDistance(test.second * orig.distance(dest), false, false);
     }

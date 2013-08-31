@@ -1,12 +1,12 @@
 #ifndef GAME_MWWORLD_WORLDIMP_H
 #define GAME_MWWORLD_WORLDIMP_H
 
+#include "../mwrender/renderingmanager.hpp"
 #include "../mwrender/debugging.hpp"
 
 #include "ptr.hpp"
 #include "scene.hpp"
 #include "esmstore.hpp"
-#include "physicssystem.hpp"
 #include "cells.hpp"
 #include "localscripts.hpp"
 #include "timestamp.hpp"
@@ -19,6 +19,14 @@ namespace Ogre
     class Vector3;
 }
 
+namespace OEngine
+{
+    namespace Render
+    {
+        class OgreRenderer;
+    }
+}
+
 namespace ESM
 {
     struct Position;
@@ -29,16 +37,16 @@ namespace Files
     class Collections;
 }
 
-namespace Render
-{
-    class OgreRenderer;
-}
-
 namespace MWRender
 {
     class SkyManager;
     class CellRender;
     class Animation;
+}
+
+namespace MWPhysics
+{
+    class PhysicsSystem;
 }
 
 namespace MWWorld
@@ -51,7 +59,10 @@ namespace MWWorld
     class World : public MWBase::World
     {
             MWWorld::Fallback mFallback;
+
             MWRender::RenderingManager* mRendering;
+
+            MWPhysics::PhysicsSystem *mPhysics;
 
             MWWorld::WeatherManager* mWeatherManager;
 
@@ -61,12 +72,9 @@ namespace MWWorld
             MWWorld::ESMStore mStore;
             LocalScripts mLocalScripts;
             MWWorld::Globals *mGlobalVariables;
-            MWWorld::PhysicsSystem *mPhysics;
             bool mSky;
 
             Cells mCells;
-
-            OEngine::Physic::PhysicEngine* mPhysEngine;
 
             // not implemented
             World (const World&);

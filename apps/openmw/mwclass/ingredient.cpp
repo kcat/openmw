@@ -10,7 +10,6 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/actiontake.hpp"
 #include "../mwworld/cellstore.hpp"
-#include "../mwworld/physicssystem.hpp"
 #include "../mwworld/actioneat.hpp"
 #include "../mwworld/player.hpp"
 #include "../mwworld/nullaction.hpp"
@@ -21,6 +20,8 @@
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
+
+#include "../mwphysics/physicssystem.hpp"
 
 namespace MWClass
 {
@@ -40,7 +41,7 @@ namespace MWClass
         }
     }
 
-    void Ingredient::insertObject(const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem& physics) const
+    void Ingredient::insertObject(const MWWorld::Ptr& ptr, MWPhysics::PhysicsSystem& physics) const
     {
         const std::string model = getModel(ptr);
         if(!model.empty())

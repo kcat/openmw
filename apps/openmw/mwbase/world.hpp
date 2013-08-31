@@ -20,11 +20,6 @@ namespace OEngine
     {
         class Fader;
     }
-
-    namespace Physic
-    {
-        class PhysicEngine;
-    }
 }
 
 namespace ESM
