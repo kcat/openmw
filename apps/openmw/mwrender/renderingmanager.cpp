@@ -349,7 +349,8 @@ void RenderingManager::update (float duration, bool paused)
 
         btVector3 btOrig(orig.x, orig.y, orig.z);
         btVector3 btDest(dest.x, dest.y, dest.z);
-        std::pair<bool,float> test = mPhysicsEngine->sphereCast(mRendering.getCamera()->getNearClipDistance()*2.5, btOrig, btDest);
+        std::pair<bool,float> test = (!mPhysicsEngine ? std::make_pair(false, 0.0f) :
+                                      mPhysicsEngine->sphereCast(mRendering.getCamera()->getNearClipDistance()*2.5, btOrig, btDest));
         if(test.first)
             mCamera->setCameraDistance(test.second * orig.distance(dest), false, false);
     }

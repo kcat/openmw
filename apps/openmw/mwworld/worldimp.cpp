@@ -172,12 +172,10 @@ namespace MWWorld
       mFallback(fallbackMap), mPlayIntro(0), mTeleportEnabled(true),
       mFacedDistance(FLT_MAX)
     {
-        mPhysics = new PhysicsSystem(renderer);
+        mPhysics = new PhysicsSystem();
         mPhysEngine = mPhysics->getEngine();
 
-        mRendering = new MWRender::RenderingManager(renderer, resDir, cacheDir, mPhysEngine,&mFallback);
-
-        mPhysEngine->setSceneManager(renderer.getScene());
+        mRendering = new MWRender::RenderingManager(renderer, resDir, cacheDir, mPhysEngine, &mFallback);
 
         mWeatherManager = new MWWorld::WeatherManager(mRendering,&mFallback);
 
@@ -1112,8 +1110,6 @@ namespace MWWorld
         }
         if(player != results.end())
             moveObjectImp(player->first, player->second.x, player->second.y, player->second.z);
-
-        mPhysEngine->stepSimulation(duration);
     }
 
     bool World::castRay (float x1, float y1, float z1, float x2, float y2, float z2)
@@ -1575,8 +1571,8 @@ namespace MWWorld
 
         // TODO: Check if flying creature
 
-        const OEngine::Physic::PhysicActor *actor = mPhysEngine->getCharacter(ptr.getRefData().getHandle());
-        if(!actor || !actor->getCollisionMode())
+        // TODO: Check if collisions are off
+        if(true)
             return true;
 
         return false;
@@ -1587,22 +1583,14 @@ namespace MWWorld
         float *fpos = object.getRefData().getPosition().pos;
         Ogre::Vector3 pos(fpos[0], fpos[1], fpos[2]);
 
-        const OEngine::Physic::PhysicActor *actor = mPhysEngine->getCharacter(object.getRefData().getHandle());
-        if(actor) pos.z += 1.85*actor->getHalfExtents().z;
-
         return isUnderwater(object.getCell(), pos);
     }
 
     bool
     World::isSwimming(const MWWorld::Ptr &object) const
     {
-        /// \todo add check ifActor() - only actors can swim
         float *fpos = object.getRefData().getPosition().pos;
         Ogre::Vector3 pos(fpos[0], fpos[1], fpos[2]);
-
-        /// \fixme 3/4ths submerged?
-        const OEngine::Physic::PhysicActor *actor = mPhysEngine->getCharacter(object.getRefData().getHandle());
-        if(actor) pos.z += actor->getHalfExtents().z * 1.5;
 
         return isUnderwater(object.getCell(), pos);
     }
@@ -1618,9 +1606,7 @@ namespace MWWorld
 
     bool World::isOnGround(const MWWorld::Ptr &ptr) const
     {
-        RefData &refdata = ptr.getRefData();
-        const OEngine::Physic::PhysicActor *physactor = mPhysEngine->getCharacter(refdata.getHandle());
-        return physactor && physactor->getOnGround();
+        return false;
     }
 
     bool World::vanityRotateCamera(float * rot)
@@ -1661,12 +1647,11 @@ namespace MWWorld
         Ptr::CellStore *currentCell = mWorldScene->getCurrentCell();
 
         Ptr player = mPlayer->getPlayer();
-        RefData &refdata = player.getRefData();
-        Ogre::Vector3 playerPos(refdata.getPosition().pos);
+        Ogre::Vector3 playerPos(player.getRefData().getPosition().pos);
 
-        const OEngine::Physic::PhysicActor *physactor = mPhysEngine->getCharacter(refdata.getHandle());
-        if((!physactor->getOnGround()&&physactor->getCollisionMode()) || isUnderwater(currentCell, playerPos))
+        if(!isOnGround(player) || isUnderwater(currentCell, playerPos))
             return 2;
+
         if((currentCell->mCell->mData.mFlags&ESM::Cell::NoSleep) ||
            Class::get(player).getNpcStats(player).isWerewolf())
             return 1;
@@ -1719,18 +1704,12 @@ namespace MWWorld
 
     bool World::getPlayerStandingOn (const MWWorld::Ptr& object)
     {
-        MWWorld::Ptr player = mPlayer->getPlayer();
-        if (!mPhysEngine->getCharacter("player")->getOnGround())
-            return false;
-        btVector3 from (player.getRefData().getPosition().pos[0], player.getRefData().getPosition().pos[1], player.getRefData().getPosition().pos[2]);
-        btVector3 to = from - btVector3(0,0,5);
-        std::pair<std::string, float> result = mPhysEngine->rayTest(from, to);
-        return result.first == object.getRefData().getBaseNode()->getName();
+        return false;
     }
 
     bool World::getActorStandingOn (const MWWorld::Ptr& object)
     {
-        return mPhysEngine->isAnyActorStandingOn(object.getRefData().getBaseNode()->getName());
+        return false;
     }
 
     float World::getWindSpeed()
@@ -1786,9 +1765,6 @@ namespace MWWorld
 
     void World::enableActorCollision(const MWWorld::Ptr& actor, bool enable)
     {
-        OEngine::Physic::PhysicActor *physicActor = mPhysEngine->getCharacter(actor.getRefData().getHandle());
-
-        physicActor->enableCollisions(enable);
     }
 
     bool World::findInteriorPosition(const std::string &name, ESM::Position &pos)
