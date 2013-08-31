@@ -1331,7 +1331,7 @@ namespace MWWorld
         if (results.empty())
         {
             mFacedHandle = "";
-            mFacedDistance = FLT_MAX;
+            mFacedDistance = std::numeric_limits<float>::max();
         }
         else
         {

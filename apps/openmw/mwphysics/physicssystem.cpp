@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+#include <btBulletDynamicsCommon.h>
+
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
 
@@ -10,10 +12,28 @@ namespace MWPhysics
 {
     PhysicsSystem::PhysicsSystem() : mTimeAccum(0.0f)
     {
+        mCollisionConfiguration = new btDefaultCollisionConfiguration();
+        mDispatcher = new btCollisionDispatcher(mCollisionConfiguration);
+
+        mSolver = new btSequentialImpulseConstraintSolver();
+
+        mPairCache = new btSortedOverlappingPairCache();
+
+        mBroadphase = new btDbvtBroadphase();
+
+        mDynamicsWorld = new btDiscreteDynamicsWorld(mDispatcher, mBroadphase, mSolver, mCollisionConfiguration);
+        mDynamicsWorld->setGravity(btVector3(0.0f, 0.0f, -627.2f));
     }
 
     PhysicsSystem::~PhysicsSystem()
     {
+        // Delete in reverse order that they were new'd
+        delete mDynamicsWorld;
+        delete mBroadphase;
+        delete mPairCache;
+        delete mSolver;
+        delete mDispatcher;
+        delete mCollisionConfiguration;
     }
 
     std::pair<float,std::string> PhysicsSystem::getFacedHandle(float queryDistance)

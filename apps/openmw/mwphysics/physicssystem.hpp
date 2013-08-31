@@ -3,7 +3,13 @@
 
 #include <OgreVector3.h>
 
-#include <btBulletCollisionCommon.h>
+
+class btDefaultCollisionConfiguration;
+class btCollisionDispatcher;
+class btOverlappingPairCache;
+class btBroadphaseInterface;
+class btSequentialImpulseConstraintSolver;
+class btDiscreteDynamicsWorld;
 
 
 namespace OEngine
@@ -26,6 +32,14 @@ namespace MWPhysics
 
     class PhysicsSystem
     {
+            btDefaultCollisionConfiguration *mCollisionConfiguration;
+            btCollisionDispatcher *mDispatcher;
+
+            btOverlappingPairCache *mPairCache;
+            btBroadphaseInterface* mBroadphase;
+            btSequentialImpulseConstraintSolver *mSolver;
+            btDiscreteDynamicsWorld *mDynamicsWorld;
+
         public:
             PhysicsSystem();
             ~PhysicsSystem();
