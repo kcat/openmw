@@ -13,12 +13,14 @@
 
 #include "../mwworld/class.hpp"
 
+#include "debugdraw.hpp"
 #include "object.hpp"
 
 
 namespace MWPhysics
 {
-    PhysicsSystem::PhysicsSystem() : mTimeAccum(0.0f)
+    PhysicsSystem::PhysicsSystem(Ogre::SceneManager *sceneMgr)
+      : mTimeAccum(0.0f)
     {
         mCollisionConfiguration = new btDefaultCollisionConfiguration();
         mDispatcher = new btCollisionDispatcher(mCollisionConfiguration);
@@ -28,11 +30,14 @@ namespace MWPhysics
         mBroadphase = new btDbvtBroadphase();
         mDynamicsWorld = new btDiscreteDynamicsWorld(mDispatcher, mBroadphase, mSolver, mCollisionConfiguration);
         mDynamicsWorld->setGravity(btVector3(0.0f, 0.0f, -627.2f));
+
+        mDebugDraw = new DebugDraw(sceneMgr, mDynamicsWorld);
     }
 
     PhysicsSystem::~PhysicsSystem()
     {
         // Delete in reverse order that they were new'd
+        delete mDebugDraw;
         delete mDynamicsWorld;
         delete mBroadphase;
         delete mPairCache;
@@ -197,5 +202,18 @@ namespace MWPhysics
         mMovementQueue.clear();
 
         return mMovementResults;
+    }
+
+
+    bool PhysicsSystem::toggleCollisionDebug()
+    {
+        bool active = !mDebugDraw->getDebugMode();
+        mDebugDraw->setDebugMode(active);
+        return active;
+    }
+
+    void PhysicsSystem::debugDraw() const
+    {
+        mDebugDraw->update();
     }
 }

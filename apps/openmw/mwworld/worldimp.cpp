@@ -173,7 +173,7 @@ namespace MWWorld
       mFallback(fallbackMap), mPlayIntro(0), mTeleportEnabled(true),
       mFacedDistance(std::numeric_limits<float>::max())
     {
-        mPhysics = new MWPhysics::PhysicsSystem();
+        mPhysics = new MWPhysics::PhysicsSystem(renderer.getScene());
 
         mRendering = new MWRender::RenderingManager(renderer, resDir, cacheDir, &mFallback);
 
@@ -1159,8 +1159,10 @@ namespace MWWorld
         return mPhysics->toggleCollisionMode();;
     }
 
-    bool World::toggleRenderMode (RenderMode mode)
+    bool World::toggleRenderMode(RenderMode mode)
     {
+        if(mode == Render_CollisionDebug)
+            return mPhysics->toggleCollisionDebug();
         return mRendering->toggleRenderMode (mode);
     }
 
@@ -1677,6 +1679,7 @@ namespace MWWorld
     void World::frameStarted (float dt, bool paused)
     {
         mRendering->frameStarted(dt, paused);
+        mPhysics->debugDraw();
     }
 
     void World::activateDoor(const MWWorld::Ptr& door)

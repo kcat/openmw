@@ -9,6 +9,7 @@ namespace Ogre
 {
     class Vector3;
     class Quaternion;
+    class SceneManager;
 }
 
 class btDefaultCollisionConfiguration;
@@ -27,6 +28,8 @@ namespace MWWorld
 
 namespace MWPhysics
 {
+    class DebugDraw;
+
     class Object;
 
     typedef std::vector<std::pair<MWWorld::Ptr,Ogre::Vector3> > PtrVelocityList;
@@ -43,10 +46,12 @@ namespace MWPhysics
         btSequentialImpulseConstraintSolver *mSolver;
         btDiscreteDynamicsWorld *mDynamicsWorld;
 
+        DebugDraw *mDebugDraw;
+
         ObjectMap mObjects;
 
         public:
-            PhysicsSystem();
+            PhysicsSystem(Ogre::SceneManager *sceneMgr);
             ~PhysicsSystem();
 
             void addObject(const MWWorld::Ptr& ptr, bool placeable=false);
@@ -97,6 +102,10 @@ namespace MWPhysics
             void queueObjectMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &velocity);
 
             const PtrVelocityList& applyQueuedMovement(float dt);
+
+            bool toggleCollisionDebug();
+
+            void debugDraw() const;
 
         private:
             PtrVelocityList mMovementQueue;

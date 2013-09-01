@@ -21,7 +21,7 @@ add_openmw_dir (mwrender
     )
 
 add_openmw_dir (mwphysics
-    physicssystem object
+    physicssystem debugdraw dynamiclinedrawer object
     )
 
 add_openmw_dir (mwinput
