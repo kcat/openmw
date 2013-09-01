@@ -58,7 +58,7 @@ namespace MWPhysics
         ori.setEulerZYX(pos.rot[2], pos.rot[1], pos.rot[0]);
         btTransform trans(ori, btVector3(pos.pos[0], pos.pos[1], pos.pos[2]));
 
-        Object *obj = new Object(shape, trans);
+        Object *obj = new Object(ptr, shape, trans);
         mObjects.insert(std::make_pair(ptr.getRefData().getHandle(), obj));
 
         mDynamicsWorld->addCollisionObject(obj->getCollisionObject());

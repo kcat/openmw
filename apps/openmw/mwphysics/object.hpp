@@ -3,13 +3,31 @@
 
 #include <components/nifbullet/bulletshape.hpp>
 
+#include "../mwworld/ptr.hpp"
+
+#include "physicssystem.hpp"
+
 class btCollisionObject;
 class btMotionState;
 class btTransform;
 
 namespace MWPhysics
 {
-    class Object
+    // FIXME: Should be neutral. For actors and objects.
+    class ObjectInfo
+    {
+        MWWorld::Ptr mPtr;
+
+    public:
+        ObjectInfo(const MWWorld::Ptr &ptr) : mPtr(ptr)
+        { }
+        virtual ~ObjectInfo() { }
+
+        const MWWorld::Ptr& getPtr() const
+        { return mPtr; }
+    };
+
+    class Object : public ObjectInfo
     {
         NifBullet::BulletShapePtr mShape;
 
@@ -17,7 +35,7 @@ namespace MWPhysics
         btCollisionObject *mCollisionObject;
 
     public:
-        Object(const NifBullet::BulletShapePtr &shape, const btTransform &startTrans);
+        Object(const MWWorld::Ptr &ptr, const NifBullet::BulletShapePtr &shape, const btTransform &startTrans);
         virtual ~Object();
 
         btCollisionObject *getCollisionObject() const
