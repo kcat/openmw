@@ -6,8 +6,14 @@
 
 #include <btBulletDynamicsCommon.h>
 
+#include <components/nifbullet/bulletshape.hpp>
+
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
+
+#include "../mwworld/class.hpp"
+
+#include "object.hpp"
 
 
 namespace MWPhysics
@@ -34,6 +40,61 @@ namespace MWPhysics
         delete mDispatcher;
         delete mCollisionConfiguration;
     }
+
+
+    void PhysicsSystem::addObject(const MWWorld::Ptr &ptr, bool placeable)
+    {
+        NifBullet::BulletShapeManager &shapeMgr = NifBullet::BulletShapeManager::getSingleton();
+        NifBullet::BulletShapePtr shape = shapeMgr.load(ptr.getClass().getModel(ptr),
+                                                        Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+
+        const ESM::Position &pos = ptr.getRefData().getPosition();
+        btQuaternion ori;
+        ori.setEulerZYX(pos.rot[2], pos.rot[1], pos.rot[0]);
+        btTransform trans(ori, btVector3(pos.pos[0], pos.pos[1], pos.pos[2]));
+
+        Object *obj = new Object(shape, trans);
+        mObjects.insert(std::make_pair(ptr.getRefData().getHandle(), obj));
+
+        mDynamicsWorld->addCollisionObject(obj->getCollisionObject());
+    }
+
+    void PhysicsSystem::addActor(const MWWorld::Ptr &ptr)
+    {
+    }
+
+    void PhysicsSystem::removeObject(const std::string &handle)
+    {
+        ObjectMap::iterator obj = mObjects.find(handle);
+        if(obj != mObjects.end())
+        {
+            mDynamicsWorld->removeCollisionObject(obj->second->getCollisionObject());
+            mObjects.erase(obj);
+        }
+    }
+
+    void PhysicsSystem::moveObject(const MWWorld::Ptr& ptr)
+    {
+    }
+
+    void PhysicsSystem::rotateObject(const MWWorld::Ptr& ptr)
+    {
+    }
+
+    void PhysicsSystem::scaleObject(const MWWorld::Ptr& ptr)
+    {
+    }
+
+    bool PhysicsSystem::toggleCollisionMode()
+    {
+        return false;
+    }
+
+    bool PhysicsSystem::getObjectAABB(const MWWorld::Ptr &ptr, Ogre::Vector3 &min, Ogre::Vector3 &max)
+    {
+        return false;
+    }
+
 
     std::pair<float,std::string> PhysicsSystem::getFacedHandle(float queryDistance)
     {
@@ -93,40 +154,6 @@ namespace MWPhysics
     {
     }
 
-    void PhysicsSystem::addObject(const MWWorld::Ptr &ptr, bool placeable)
-    {
-    }
-
-    void PhysicsSystem::addActor(const MWWorld::Ptr &ptr)
-    {
-    }
-
-    void PhysicsSystem::removeObject(const std::string& handle)
-    {
-    }
-
-    void PhysicsSystem::moveObject(const MWWorld::Ptr& ptr)
-    {
-    }
-
-    void PhysicsSystem::rotateObject(const MWWorld::Ptr& ptr)
-    {
-    }
-
-    void PhysicsSystem::scaleObject(const MWWorld::Ptr& ptr)
-    {
-    }
-
-    bool PhysicsSystem::toggleCollisionMode()
-    {
-        return false;
-    }
-
-    bool PhysicsSystem::getObjectAABB(const MWWorld::Ptr &ptr, Ogre::Vector3 &min, Ogre::Vector3 &max)
-    {
-        return false;
-    }
-
 
     void PhysicsSystem::queueObjectMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &movement)
     {
@@ -164,6 +191,7 @@ namespace MWPhysics
                 mMovementResults.push_back(std::make_pair(iter->first, newpos));
             }
 
+            mDynamicsWorld->stepSimulation(mTimeAccum);
             mTimeAccum = 0.0f;
         }
         mMovementQueue.clear();

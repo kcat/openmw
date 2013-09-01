@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
 namespace Ogre
 {
@@ -26,17 +27,23 @@ namespace MWWorld
 
 namespace MWPhysics
 {
+    class Object;
+
     typedef std::vector<std::pair<MWWorld::Ptr,Ogre::Vector3> > PtrVelocityList;
 
     class PhysicsSystem
     {
-            btDefaultCollisionConfiguration *mCollisionConfiguration;
-            btCollisionDispatcher *mDispatcher;
+        typedef std::map<std::string,Object*> ObjectMap;
 
-            btOverlappingPairCache *mPairCache;
-            btBroadphaseInterface* mBroadphase;
-            btSequentialImpulseConstraintSolver *mSolver;
-            btDiscreteDynamicsWorld *mDynamicsWorld;
+        btDefaultCollisionConfiguration *mCollisionConfiguration;
+        btCollisionDispatcher *mDispatcher;
+
+        btOverlappingPairCache *mPairCache;
+        btBroadphaseInterface* mBroadphase;
+        btSequentialImpulseConstraintSolver *mSolver;
+        btDiscreteDynamicsWorld *mDynamicsWorld;
+
+        ObjectMap mObjects;
 
         public:
             PhysicsSystem();
