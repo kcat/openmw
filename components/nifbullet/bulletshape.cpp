@@ -1,6 +1,6 @@
 #include "bulletshape.hpp"
 
-#include <BulletCollision/CollisionShapes/btCompoundShape.h>
+#include <btBulletCollisionCommon.h>
 
 namespace Ogre
 {
@@ -33,6 +33,7 @@ BulletShape::~BulletShape()
 void BulletShape::loadImpl()
 {
     // TODO: Load me!
+    mCollisionShape = new btBoxShape(btVector3(10,10,10));
 }
 
 void BulletShape::unloadImpl()
