@@ -5,6 +5,7 @@
 #include <OgreVector3.h>
 
 #include <btBulletDynamicsCommon.h>
+#include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 
 #include <components/nifbullet/bulletshape.hpp>
 
@@ -19,6 +20,64 @@
 
 namespace MWPhysics
 {
+    // Heightfield container. Note that heightmaps will have an empty Ptr object in ObjectInfo.
+    class Heightmap : public ObjectInfo
+    {
+        btHeightfieldTerrainShape *mShape;
+        btMotionState *mMotionState;
+        btCollisionObject *mCollisionObject;
+
+    public:
+        Heightmap(int x, int y, const float *heights, float yoffset, float triSize, int sqrtVerts)
+          : ObjectInfo(MWWorld::Ptr())
+          , mShape(0)
+          , mMotionState(0)
+          , mCollisionObject(0)
+        {
+            // find the minimum and maximum heights (needed for bullet)
+            float minh = heights[0];
+            float maxh = heights[0];
+            for(int i = 1;i < sqrtVerts*sqrtVerts;++i)
+            {
+                float h = heights[i];
+                if(h > maxh) maxh = h;
+                if(h < minh) minh = h;
+            }
+
+            mShape = new btHeightfieldTerrainShape(
+                sqrtVerts, sqrtVerts, heights, 1,
+                minh, maxh, 2,
+                PHY_FLOAT, true
+            );
+            mShape->setUseDiamondSubdivision(true);
+            mShape->setLocalScaling(btVector3(triSize, triSize, 1));
+
+            btTransform transform(btQuaternion::getIdentity(),
+                                  btVector3((x+0.5f) * triSize * (sqrtVerts-1.0f),
+                                            (y+0.5f) * triSize * (sqrtVerts-1.0f),
+                                            (maxh+minh)*0.5f));
+            mMotionState = new btDefaultMotionState(transform);
+
+            btRigidBody::btRigidBodyConstructionInfo cinf = btRigidBody::btRigidBodyConstructionInfo(0.0f, mMotionState, mShape);
+            mCollisionObject = new btRigidBody(cinf);
+
+            // Explicitly downcast to ensure the user pointer can be directly casted back to
+            // ObjectInfo.
+            mCollisionObject->setUserPointer(static_cast<ObjectInfo*>(this));
+        }
+
+        virtual ~Heightmap()
+        {
+            delete mCollisionObject;
+            delete mMotionState;
+            delete mShape;
+        }
+
+        btCollisionObject *getCollisionObject() const
+        { return mCollisionObject; }
+    };
+
+
     PhysicsSystem::PhysicsSystem(Ogre::SceneManager *sceneMgr)
       : mTimeAccum(0.0f)
     {
@@ -90,6 +149,28 @@ namespace MWPhysics
     {
     }
 
+
+    void PhysicsSystem::addHeightField(int x, int y, const float *heights, float yoffset,
+                                       float triSize, int sqrtVerts)
+    {
+        Heightmap *heightmap = new Heightmap(x, y, heights, yoffset, triSize, sqrtVerts);
+        mHeightmaps[std::make_pair(x,y)] = heightmap;
+
+        mDynamicsWorld->addCollisionObject(heightmap->getCollisionObject());
+    }
+
+    void PhysicsSystem::removeHeightField(int x, int y)
+    {
+        HeightmapMap::iterator heightmap = mHeightmaps.find(std::make_pair(x,y));
+        if(heightmap != mHeightmaps.end())
+        {
+            mDynamicsWorld->removeCollisionObject(heightmap->second->getCollisionObject());
+            delete heightmap->second;
+            mHeightmaps.erase(heightmap);
+        }
+    }
+
+
     bool PhysicsSystem::toggleCollisionMode()
     {
         return false;
@@ -148,15 +229,6 @@ namespace MWPhysics
     Ogre::Vector3 PhysicsSystem::traceDown(const MWWorld::Ptr &ptr)
     {
         return Ogre::Vector3(ptr.getRefData().getPosition().pos);
-    }
-
-    void PhysicsSystem::addHeightField(float *heights, int x, int y, float yoffset,
-                                       float triSize, float sqrtVerts)
-    {
-    }
-
-    void PhysicsSystem::removeHeightField(int x, int y)
-    {
     }
 
 

@@ -127,8 +127,8 @@ namespace MWWorld
 
         if(result.second)
         {
-            float verts = ESM::Land::LAND_SIZE;
-            float worldsize = ESM::Land::REAL_SIZE;
+            int verts = ESM::Land::LAND_SIZE;
+            int worldsize = ESM::Land::REAL_SIZE;
 
             // Load terrain physics first...
             if (cell->mCell->isExterior())
@@ -139,14 +139,14 @@ namespace MWWorld
                         cell->mCell->getGridY()
                     );
                 if (land) {
-                    mPhysics.addHeightField (
-                        land->mLandData->mHeights,
+                    mPhysics.addHeightField(
                         cell->mCell->getGridX(),
                         cell->mCell->getGridY(),
+                        land->mLandData->mHeights,
                         0,
-                        worldsize / (verts-1),
-                        verts)
-                    ;
+                        (float)worldsize / (float)(verts-1),
+                        verts
+                    );
                 }
             }
 

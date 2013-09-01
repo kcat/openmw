@@ -19,6 +19,8 @@ class btBroadphaseInterface;
 class btSequentialImpulseConstraintSolver;
 class btDiscreteDynamicsWorld;
 
+class btRigidBody;
+
 
 namespace MWWorld
 {
@@ -30,12 +32,14 @@ namespace MWPhysics
 {
     class DebugDraw;
 
+    class Heightmap;
     class Object;
 
     typedef std::vector<std::pair<MWWorld::Ptr,Ogre::Vector3> > PtrVelocityList;
 
     class PhysicsSystem
     {
+        typedef std::map<std::pair<int,int>,Heightmap*> HeightmapMap;
         typedef std::map<std::string,Object*> ObjectMap;
 
         btDefaultCollisionConfiguration *mCollisionConfiguration;
@@ -48,6 +52,7 @@ namespace MWPhysics
 
         DebugDraw *mDebugDraw;
 
+        HeightmapMap mHeightmaps;
         ObjectMap mObjects;
 
         public:
@@ -58,8 +63,8 @@ namespace MWPhysics
 
             void addActor(const MWWorld::Ptr& ptr);
 
-            void addHeightField(float *heights, int x, int y, float yoffset,
-                                float triSize, float sqrtVerts);
+            void addHeightField(int x, int y, const float *heights, float yoffset,
+                                float triSize, int sqrtVerts);
 
             void removeHeightField(int x, int y);
 
