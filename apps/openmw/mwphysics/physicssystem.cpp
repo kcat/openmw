@@ -135,9 +135,12 @@ namespace MWPhysics
                                                         Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
 
         const ESM::Position &pos = ptr.getRefData().getPosition();
-        btQuaternion ori;
-        ori.setEulerZYX(pos.rot[2], pos.rot[1], pos.rot[0]);
-        btTransform trans(ori, btVector3(pos.pos[0], pos.pos[1], pos.pos[2]));
+        btQuaternion rx, ry, rz;
+        rx.setRotation(btVector3(1.0f, 0.0f, 0.0f), -pos.rot[0]);
+        ry.setRotation(btVector3(0.0f, 1.0f, 0.0f), -pos.rot[1]);
+        rz.setRotation(btVector3(0.0f, 0.0f, 1.0f), -pos.rot[2]);
+
+        btTransform trans(rx*ry*rz, btVector3(pos.pos[0], pos.pos[1], pos.pos[2]));
 
         Object *obj = new Object(ptr, shape, trans);
         mObjects.insert(std::make_pair(ptr.getRefData().getHandle(), obj));
