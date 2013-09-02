@@ -16,6 +16,7 @@ namespace MWPhysics
     // FIXME: Should be neutral. For actors and objects.
     class ObjectInfo
     {
+    protected:
         MWWorld::Ptr mPtr;
 
     public:

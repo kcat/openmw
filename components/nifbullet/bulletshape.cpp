@@ -39,6 +39,11 @@ void BulletShape::loadImpl()
 
 void BulletShape::unloadImpl()
 {
+    ScaledShapeMap::iterator coliter = mScaledCollisionShapes.begin();
+    for(;coliter != mScaledCollisionShapes.end();coliter++)
+        destroyCollisionShape(coliter->second);
+    mScaledCollisionShapes.clear();
+
     if(mCollisionShape)
         destroyCollisionShape(mCollisionShape);
     mCollisionShape = 0;
@@ -48,6 +53,23 @@ size_t BulletShape::calculateSize() const
 {
     // TODO: Get resource data size
     return 1;
+}
+
+
+btCollisionShape* BulletShape::getScaledCollisionShape(float scale)
+{
+    assert(scale > 0.0f);
+    unsigned int scaleidx = (unsigned int)(scale * 100.0f);
+
+    if(scaleidx == 100)
+        return mCollisionShape;
+
+    ScaledShapeMap::iterator coliter = mScaledCollisionShapes.find(scaleidx);
+    if(coliter != mScaledCollisionShapes.end())
+        return coliter->second;
+
+    // FIXME: Generate scaled collision shape
+    return mCollisionShape;
 }
 
 

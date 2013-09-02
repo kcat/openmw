@@ -2,6 +2,7 @@
 
 #include <btBulletDynamicsCommon.h>
 #include <btBulletCollisionCommon.h>
+#include <OgreSceneNode.h>
 
 namespace MWPhysics
 {
@@ -14,7 +15,8 @@ Object::Object(const MWWorld::Ptr &ptr, const NifBullet::BulletShapePtr &shape, 
 {
     mMotionState = new btDefaultMotionState(startTrans);
 
-    btRigidBody::btRigidBodyConstructionInfo cinf(0.0f, mMotionState, shape->getCollisionShape());
+    const Ogre::Vector3 &scale = mPtr.getRefData().getBaseNode()->getScale();
+    btRigidBody::btRigidBodyConstructionInfo cinf(0.0f, mMotionState, shape->getScaledCollisionShape(scale.x));
     mCollisionObject = new btRigidBody(cinf);
 
     // Explicitly downcast to ensure the user pointer can be directly casted back to ObjectInfo.

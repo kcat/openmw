@@ -11,7 +11,10 @@ namespace NifBullet
 
 class BulletShape : public Ogre::Resource
 {
+    typedef std::map<unsigned int,btCollisionShape*> ScaledShapeMap;
+
     btCollisionShape *mCollisionShape;
+    ScaledShapeMap mScaledCollisionShapes;
 
     // If this is false, "placeable" objects will not have collisions
     bool mHasRootCollision;
@@ -36,6 +39,9 @@ public:
 
      btCollisionShape *getCollisionShape() const
      { return mCollisionShape; }
+
+     // Scale is accurate to 1/100ths
+     btCollisionShape *getScaledCollisionShape(float scale);
 
      bool hasRootCollision() const
      { return mHasRootCollision; }
