@@ -81,10 +81,39 @@ btCollisionShape* BulletShape::getScaledCollisionShape(float scale)
     if(coliter != mScaledCollisionShapes.end())
         return coliter->second;
 
-    // FIXME: Generate scaled collision shape
-    return mCollisionShape;
+    btCollisionShape *newShape = duplicateCollisionShape(mCollisionShape);
+    newShape->setLocalScaling(btVector3(scale, scale, scale));
+    mScaledCollisionShapes.insert(std::make_pair(scaleidx, newShape));
+    return newShape;
 }
 
+
+btCollisionShape *BulletShape::duplicateCollisionShape(btCollisionShape *shape)
+{
+    if(shape->isCompound())
+    {
+        btCompoundShape *comp = static_cast<btCompoundShape*>(shape);
+        btCompoundShape *newShape = new btCompoundShape;
+
+        int numShapes = comp->getNumChildShapes();
+        for(int i = 0;i < numShapes;i++)
+        {
+            btCollisionShape *child = duplicateCollisionShape(comp->getChildShape(i));
+            newShape->addChildShape(comp->getChildTransform(i), child);
+        }
+
+        return newShape;
+    }
+
+    if(btBvhTriangleMeshShape *trishape = dynamic_cast<btBvhTriangleMeshShape*>(shape))
+    {
+        btScaledBvhTriangleMeshShape *newShape;
+        newShape = new btScaledBvhTriangleMeshShape(trishape, btVector3(1.0f, 1.0f, 1.0f));
+        return newShape;
+    }
+
+    throw std::logic_error(std::string("Unhandled Bullet shape duplication: ")+shape->getName());
+}
 
 void BulletShape::destroyCollisionShape(btCollisionShape *shape)
 {
