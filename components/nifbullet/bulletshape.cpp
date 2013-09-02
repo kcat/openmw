@@ -1,4 +1,5 @@
 #include "bulletshape.hpp"
+#include "bulletnifloader.hpp"
 
 #include <btBulletCollisionCommon.h>
 
@@ -32,8 +33,8 @@ BulletShape::~BulletShape()
 
 void BulletShape::loadImpl()
 {
-    // TODO: Load me!
-    mCollisionShape = new btBoxShape(btVector3(10,10,10));
+    BulletShapeLoader loader;
+    loader.load(mName, this);
 }
 
 void BulletShape::unloadImpl()

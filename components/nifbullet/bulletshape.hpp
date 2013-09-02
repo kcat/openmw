@@ -20,6 +20,11 @@ protected:
      virtual void unloadImpl();
      virtual size_t calculateSize() const;
 
+     void setCollisionShape(btCollisionShape *shape)
+     { mCollisionShape = shape; }
+
+     friend class BulletShapeLoader;
+
 public:
      BulletShape(Ogre::ResourceManager *creator, const Ogre::String &name,
                  Ogre::ResourceHandle handle, const Ogre::String &group, bool isManual = false, 

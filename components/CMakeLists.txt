@@ -23,7 +23,7 @@ add_component_dir (nifogre
     )
 
 add_component_dir (nifbullet
-    bulletshape
+    bulletshape bulletnifloader
     )
 
 add_component_dir (to_utf8
