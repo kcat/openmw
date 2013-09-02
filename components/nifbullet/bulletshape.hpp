@@ -13,6 +13,9 @@ class BulletShape : public Ogre::Resource
 {
     btCollisionShape *mCollisionShape;
 
+    // If this is false, only static, "non-placeable", objects will have collisions
+    bool mHasRootCollision;
+
     static void destroyCollisionShape(btCollisionShape *shape);
 
 protected:
