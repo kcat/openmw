@@ -50,7 +50,7 @@ void BulletShapeLoader::load(const std::string &name, BulletShape *shape)
         buildFromModel(node, shape);
 
     if(!shape->getCollisionShape())
-        shape->setCollisionShape(new btBoxShape(btVector3(10,10,10)));
+        std::cerr<< "No collision shape found for "<<name <<std::endl;
 }
 
 

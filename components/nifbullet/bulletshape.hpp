@@ -13,7 +13,7 @@ class BulletShape : public Ogre::Resource
 {
     btCollisionShape *mCollisionShape;
 
-    // If this is false, only static, "non-placeable", objects will have collisions
+    // If this is false, "placeable" objects will not have collisions
     bool mHasRootCollision;
 
     static void destroyCollisionShape(btCollisionShape *shape);
@@ -36,6 +36,9 @@ public:
 
      btCollisionShape *getCollisionShape() const
      { return mCollisionShape; }
+
+     bool hasRootCollision() const
+     { return mHasRootCollision; }
 };
 
 #if (OGRE_VERSION >= ((1 << 16) | (9 << 8) | 0))

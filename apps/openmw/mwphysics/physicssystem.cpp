@@ -134,6 +134,12 @@ namespace MWPhysics
         NifBullet::BulletShapePtr shape = shapeMgr.load(ptr.getClass().getModel(ptr),
                                                         Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
 
+        if(!shape->getCollisionShape())
+            return;
+
+        if(placeable && !shape->hasRootCollision())
+            return;
+
         const ESM::Position &pos = ptr.getRefData().getPosition();
         btQuaternion rx, ry, rz;
         rx.setRotation(btVector3(1.0f, 0.0f, 0.0f), -pos.rot[0]);
