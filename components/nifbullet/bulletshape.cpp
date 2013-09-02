@@ -3,6 +3,16 @@
 
 #include <btBulletCollisionCommon.h>
 
+namespace
+{
+    template<typename T>
+    struct DeleteMe
+    {
+        void operator()(T *obj)
+        { delete obj; }
+    };
+}
+
 namespace Ogre
 {
 template<>
@@ -47,6 +57,9 @@ void BulletShape::unloadImpl()
     if(mCollisionShape)
         destroyCollisionShape(mCollisionShape);
     mCollisionShape = 0;
+
+    std::for_each(mMeshIfaces.begin(), mMeshIfaces.end(), DeleteMe<btStridingMeshInterface>());
+    mMeshIfaces.clear();
 }
 
 size_t BulletShape::calculateSize() const

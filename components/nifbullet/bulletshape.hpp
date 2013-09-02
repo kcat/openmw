@@ -4,7 +4,9 @@
 #include <OgreResourceManager.h>
 #include <OgreResource.h>
 
-#include <BulletCollision/CollisionShapes/btCollisionShape.h>
+class btCollisionShape;
+class btStridingMeshInterface;
+
 
 namespace NifBullet
 {
@@ -12,6 +14,9 @@ namespace NifBullet
 class BulletShape : public Ogre::Resource
 {
     typedef std::map<unsigned int,btCollisionShape*> ScaledShapeMap;
+    typedef std::vector<btStridingMeshInterface*> StridingMeshIfaceList;
+
+    StridingMeshIfaceList mMeshIfaces;
 
     btCollisionShape *mCollisionShape;
     ScaledShapeMap mScaledCollisionShapes;

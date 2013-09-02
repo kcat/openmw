@@ -8,25 +8,6 @@
 #include "bulletshape.hpp"
 
 
-namespace
-{
-
-struct TriangleMeshShape : public btBvhTriangleMeshShape
-{
-    TriangleMeshShape(btStridingMeshInterface *meshInterface, bool useQuantizedAabbCompression)
-      : btBvhTriangleMeshShape(meshInterface, useQuantizedAabbCompression)
-    {
-    }
-
-    virtual ~TriangleMeshShape()
-    {
-        delete getTriangleInfoMap();
-        delete m_meshInterface;
-    }
-};
-
-}
-
 namespace NifBullet
 {
 
@@ -135,7 +116,8 @@ void BulletShapeLoader::loadTriShape(const Nif::NiTriShape *trishape, BulletShap
     btCollisionShape *curshape = shape->getCollisionShape();
     assert(!curshape || curshape->isCompound());
 
-    std::auto_ptr<btTriangleMesh> mesh(new btTriangleMesh);
+    btTriangleMesh *mesh = new btTriangleMesh;
+    shape->mMeshIfaces.push_back(mesh);
 
     const Nif::NiTriShapeData *data = trishape->data.getPtr();
     const Ogre::Vector3 *vertices = &data->vertices[0];
@@ -149,17 +131,13 @@ void BulletShapeLoader::loadTriShape(const Nif::NiTriShape *trishape, BulletShap
                           btVector3(b3.x, b3.y, b3.z));
     }
 
-    Ogre::Matrix3 mat3;
     Ogre::Matrix4 transform = trishape->getWorldTransform();
-    transform.extract3x3Matrix(mat3);
-    Ogre::Vector3 pos(transform[0][3], transform[1][3], transform[2][3]);
-
-    btTransform bttrans(btMatrix3x3(mat3[0][0], mat3[0][1], mat3[0][2],
-                                    mat3[1][0], mat3[1][1], mat3[1][2],
-                                    mat3[2][0], mat3[2][1], mat3[2][2]),
-                        btVector3(pos.x, pos.y, pos.z));
+    btTransform bttrans(btMatrix3x3(transform[0][0], transform[0][1], transform[0][2],
+                                    transform[1][0], transform[1][1], transform[1][2],
+                                    transform[2][0], transform[2][1], transform[2][2]),
+                        btVector3(transform[0][3], transform[1][3], transform[2][3]));
     btCompoundShape *comp = (curshape ? static_cast<btCompoundShape*>(curshape) : new btCompoundShape());
-    comp->addChildShape(bttrans, new TriangleMeshShape(mesh.release(), true));
+    comp->addChildShape(bttrans, new btBvhTriangleMeshShape(mesh, true));
     shape->setCollisionShape(comp);
 }
 
