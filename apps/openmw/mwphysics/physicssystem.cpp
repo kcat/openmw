@@ -131,7 +131,8 @@ namespace MWPhysics
     void PhysicsSystem::addObject(const MWWorld::Ptr &ptr, bool placeable)
     {
         NifBullet::BulletShapeManager &shapeMgr = NifBullet::BulletShapeManager::getSingleton();
-        NifBullet::BulletShapePtr shape = shapeMgr.load(ptr.getClass().getModel(ptr),
+        std::string name = ptr.getClass().getModel(ptr);
+        NifBullet::BulletShapePtr shape = shapeMgr.load(Misc::StringUtils::toLower(name),
                                                         Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
 
         if(!shape->getCollisionShape())
