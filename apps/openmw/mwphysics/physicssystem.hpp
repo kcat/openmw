@@ -10,6 +10,7 @@ namespace Ogre
     class Vector3;
     class Quaternion;
     class SceneManager;
+    class Ray;
 }
 
 class btDefaultCollisionConfiguration;
@@ -63,11 +64,6 @@ namespace MWPhysics
 
             void addActor(const MWWorld::Ptr& ptr);
 
-            void addHeightField(int x, int y, const float *heights, float yoffset,
-                                float triSize, int sqrtVerts);
-
-            void removeHeightField(int x, int y);
-
             // have to keep this as handle for now as unloadcell only knows scenenode names
             void removeObject(const std::string& handle);
 
@@ -77,20 +73,24 @@ namespace MWPhysics
 
             void scaleObject(const MWWorld::Ptr& ptr);
 
+            void addHeightField(int x, int y, const float *heights, float yoffset,
+                                float triSize, int sqrtVerts);
+
+            void removeHeightField(int x, int y);
+
             bool toggleCollisionMode();
+
+            std::pair<float,MWWorld::Ptr> getFacedHandle(const Ogre::Ray &ray, float queryDistance) const;
 
             /// get handles this object collides with
             std::vector<std::string> getCollisions(const MWWorld::Ptr &ptr);
 
             Ogre::Vector3 traceDown(const MWWorld::Ptr &ptr);
 
-            std::pair<float,std::string> getFacedHandle(float queryDistance);
             std::pair<std::string,Ogre::Vector3> getHitContact(const std::string &name,
                                                                const Ogre::Vector3 &origin,
                                                                const Ogre::Quaternion &orientation,
                                                                float queryDistance);
-            std::vector<std::pair<float,std::string> > getFacedHandles(float queryDistance);
-            std::vector<std::pair<float,std::string> > getFacedHandles(float mouseX, float mouseY, float queryDistance);
 
             // cast ray, return true if it hit something. if raycasringObjectOnlt is set to false, it ignores NPCs and objects with no collisions.
             bool castRay(const Ogre::Vector3 &from, const Ogre::Vector3 &to, bool raycastingObjectOnly = true, bool ignoreHeightMap = false);

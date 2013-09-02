@@ -18,6 +18,28 @@
 #include "object.hpp"
 
 
+namespace
+{
+    struct RayResultCallback : public btCollisionWorld::RayResultCallback
+    {
+        RayResultCallback()
+        {
+        }
+
+        virtual btScalar addSingleResult(btCollisionWorld::LocalRayResult &rayResult, bool /*normalInWorldSpace*/)
+        {
+            // Caller already does the filter on the m_closestHitFraction
+            btAssert(rayResult.m_hitFraction <= m_closestHitFraction);
+
+            m_closestHitFraction = rayResult.m_hitFraction;
+            m_collisionObject = rayResult.m_collisionObject;
+
+            return rayResult.m_hitFraction;
+        }
+    };
+}
+
+
 namespace MWPhysics
 {
     // Heightfield container. Note that heightmaps will have an empty Ptr object in ObjectInfo.
@@ -176,26 +198,30 @@ namespace MWPhysics
         return false;
     }
 
+
+    std::pair<float,MWWorld::Ptr> PhysicsSystem::getFacedHandle(const Ogre::Ray &ray, float queryDistance) const
+    {
+        const Ogre::Vector3 &origin_ = ray.getOrigin();
+        const Ogre::Vector3 dest_ = ray.getPoint(queryDistance);
+
+        btVector3 from(origin_.x, origin_.y, origin_.z);
+        btVector3 to(dest_.x, dest_.y, dest_.z);
+        RayResultCallback callback;
+        mDynamicsWorld->rayTest(from, to, callback);
+
+        if(!callback.m_collisionObject)
+            return std::make_pair(queryDistance,MWWorld::Ptr());
+        const ObjectInfo *info = static_cast<const ObjectInfo*>(callback.m_collisionObject->getUserPointer());
+        return std::make_pair(callback.m_closestHitFraction*queryDistance, info->getPtr());
+    }
+
+
+
     bool PhysicsSystem::getObjectAABB(const MWWorld::Ptr &ptr, Ogre::Vector3 &min, Ogre::Vector3 &max)
     {
         return false;
     }
 
-
-    std::pair<float,std::string> PhysicsSystem::getFacedHandle(float queryDistance)
-    {
-        return std::make_pair(1.0f, std::string());
-    }
-
-    std::vector<std::pair<float,std::string> > PhysicsSystem::getFacedHandles(float queryDistance)
-    {
-        return std::vector<std::pair<float,std::string> >();
-    }
-
-    std::vector<std::pair<float,std::string> > PhysicsSystem::getFacedHandles(float mouseX, float mouseY, float queryDistance)
-    {
-        return std::vector<std::pair<float,std::string> >();
-    }
 
     std::pair<std::string,Ogre::Vector3> PhysicsSystem::getHitContact(const std::string &name,
                                                                       const Ogre::Vector3 &origin,

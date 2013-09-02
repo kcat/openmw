@@ -83,7 +83,7 @@ namespace MWWorld
             Ptr getPtrViaHandle (const std::string& handle, Ptr::CellStore& cellStore);
 
             int mActivationDistanceOverride;
-            std::string mFacedHandle;
+            Ptr mFacedPtr;
             float mFacedDistance;
 
             std::map<MWWorld::Ptr, int> mDoorStates;

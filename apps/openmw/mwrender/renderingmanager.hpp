@@ -196,6 +196,7 @@ public:
 
     void processChangedSettings(const Settings::CategorySettingVector& settings);
 
+    Ogre::Camera* getCamera() { return mRendering.getCamera(); }
     Ogre::Viewport* getViewport() { return mRendering.getViewport(); }
 
     void getInteriorMapPosition (Ogre::Vector2 position, float& nX, float& nY, int &x, int& y);

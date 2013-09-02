@@ -1,6 +1,8 @@
 #include "worldimp.hpp"
 
 #include <OgreSceneNode.h>
+#include <OgreRay.h>
+#include <OgreCamera.h>
 
 #include <components/bsa/bsa_archive.hpp>
 #include <components/files/collections.hpp>
@@ -761,30 +763,7 @@ namespace MWWorld
 
     MWWorld::Ptr World::getFacedObject()
     {
-        std::pair<float, std::string> result;
-
-        if (!mRendering->occlusionQuerySupported())
-            result = mPhysics->getFacedHandle (getMaxActivationDistance ());
-        else
-            result = std::make_pair (mFacedDistance, mFacedHandle);
-
-        if (result.second.empty())
-            return MWWorld::Ptr ();
-
-        MWWorld::Ptr object = searchPtrViaHandle (result.second);
-        float ActivationDistance;
-
-        if (MWBase::Environment::get().getWindowManager()->isConsoleMode())
-            ActivationDistance = getObjectActivationDistance ()*50;
-        else if (object.getTypeName ().find("NPC") != std::string::npos)
-            ActivationDistance = getNpcActivationDistance ();
-        else
-            ActivationDistance = getObjectActivationDistance ();
-
-        if (result.first > ActivationDistance)
-            return MWWorld::Ptr ();
-
-        return object;
+        return mFacedPtr;
     }
 
     std::pair<MWWorld::Ptr,Ogre::Vector3> World::getHitContact(const MWWorld::Ptr &ptr, float distance)
@@ -1303,43 +1282,25 @@ namespace MWWorld
     {
         // send new query
         // figure out which object we want to test against
-        std::vector < std::pair < float, std::string > > results;
+        std::pair<float,Ptr> result;
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
             float x, y;
             MWBase::Environment::get().getWindowManager()->getMousePosition(x, y);
-            results = mPhysics->getFacedHandles(x, y, getMaxActivationDistance ());
-            if (MWBase::Environment::get().getWindowManager()->isConsoleMode())
-                results = mPhysics->getFacedHandles(x, y, getMaxActivationDistance ()*50);
-        }
-        else
-        {
-            results = mPhysics->getFacedHandles(getMaxActivationDistance ());
-        }
-
-        // ignore the player and other things we're not interested in
-        std::vector < std::pair < float, std::string > >::iterator it = results.begin();
-        while (it != results.end())
-        {
-            if ( (*it).second.find("HeightField") != std::string::npos // not interested in terrain
-            || getPtrViaHandle((*it).second) == mPlayer->getPlayer() ) // not interested in player (unless you want to talk to yourself)
-            {
-                it = results.erase(it);
-            }
+            Ogre::Ray ray = mRendering->getCamera()->getCameraToViewportRay(x, y);
+            if(!MWBase::Environment::get().getWindowManager()->isConsoleMode())
+                result = mPhysics->getFacedHandle(ray, getMaxActivationDistance());
             else
-                ++it;
-        }
-
-        if (results.empty())
-        {
-            mFacedHandle = "";
-            mFacedDistance = std::numeric_limits<float>::max();
+                result = mPhysics->getFacedHandle(ray, getMaxActivationDistance()*50.0f);
         }
         else
         {
-            mFacedHandle = results.front().second;
-            mFacedDistance = results.front().first;
+            Ogre::Ray ray = mRendering->getCamera()->getCameraToViewportRay(0.5f, 0.5f);
+            result = mPhysics->getFacedHandle(ray, getMaxActivationDistance());
         }
+
+        mFacedDistance = result.first;
+        mFacedPtr = result.second;
     }
 
     bool World::isCellExterior() const
