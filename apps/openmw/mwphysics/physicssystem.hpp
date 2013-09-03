@@ -37,6 +37,7 @@ namespace MWPhysics
 
     class Heightmap;
     class Object;
+    class Actor;
 
     typedef std::vector<std::pair<MWWorld::Ptr,Ogre::Vector3> > PtrVelocityList;
 
@@ -44,6 +45,7 @@ namespace MWPhysics
     {
         typedef std::map<std::pair<int,int>,Heightmap*> HeightmapMap;
         typedef std::map<std::string,Object*> ObjectMap;
+        typedef std::map<std::string,Actor*> ActorMap;
 
         btDefaultCollisionConfiguration *mCollisionConfiguration;
         btCollisionDispatcher *mDispatcher;
@@ -57,6 +59,7 @@ namespace MWPhysics
 
         HeightmapMap mHeightmaps;
         ObjectMap mObjects;
+        ActorMap mActors;
 
         public:
             PhysicsSystem(Ogre::SceneManager *sceneMgr);

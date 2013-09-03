@@ -59,6 +59,11 @@ public:
 
      bool hasRootCollision() const
      { return mHasRootCollision; }
+
+     const btTransform& getBBoxTransform() const
+     { return mBBoxTransform; }
+     const btVector3& getBBoxRadius() const
+     { return mBBoxRadius; }
 };
 
 #if (OGRE_VERSION >= ((1 << 16) | (9 << 8) | 0))

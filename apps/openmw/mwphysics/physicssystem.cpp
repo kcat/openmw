@@ -16,6 +16,7 @@
 
 #include "debugdraw.hpp"
 #include "object.hpp"
+#include "actor.hpp"
 
 
 namespace
@@ -149,6 +150,23 @@ namespace MWPhysics
 
     void PhysicsSystem::addActor(const MWWorld::Ptr &ptr)
     {
+        NifBullet::BulletShapeManager &shapeMgr = NifBullet::BulletShapeManager::getSingleton();
+        std::string name = ptr.getClass().getModel(ptr);
+        NifBullet::BulletShapePtr shape = shapeMgr.load(Misc::StringUtils::toLower(name),
+                                                        Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+
+        if(shape->getBBoxRadius() == btVector3(0.0f, 0.0f, 0.0f))
+        {
+            // TODO: Generate a bounding box from the actual shape? Make a default?
+            return;
+        }
+
+        Actor *actor = new Actor(ptr, shape, this);
+        mActors.insert(std::make_pair(ptr.getRefData().getHandle(), actor));
+
+        mDynamicsWorld->addCollisionObject(actor->getCollisionObject(),
+                                           btBroadphaseProxy::CharacterFilter,
+                                           btBroadphaseProxy::AllFilter);
     }
 
     void PhysicsSystem::removeObject(const std::string &handle)
@@ -157,7 +175,18 @@ namespace MWPhysics
         if(obj != mObjects.end())
         {
             mDynamicsWorld->removeCollisionObject(obj->second->getCollisionObject());
+            delete obj->second;
             mObjects.erase(obj);
+            return;
+        }
+
+        ActorMap::iterator actor = mActors.find(handle);
+        if(actor != mActors.end())
+        {
+            mDynamicsWorld->removeCollisionObject(actor->second->getCollisionObject());
+            delete actor->second;
+            mActors.erase(actor);
+            return;
         }
     }
 
@@ -181,7 +210,15 @@ namespace MWPhysics
             return;
         }
 
-        // TODO: Check actors
+        ActorMap::iterator act(mActors.find(ptr.getRefData().getHandle()));
+        if(act != mActors.end())
+        {
+            Actor *actor = act->second;
+            mDynamicsWorld->removeCollisionObject(actor->getCollisionObject());
+            actor->resetCollisionObject();
+            mDynamicsWorld->addCollisionObject(actor->getCollisionObject());
+            return;
+        }
     }
 
 
