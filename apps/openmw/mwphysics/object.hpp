@@ -41,6 +41,8 @@ namespace MWPhysics
 
         btCollisionObject *getCollisionObject() const
         { return mCollisionObject; }
+
+        void resetCollisionObject();
     };
 }
 

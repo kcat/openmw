@@ -179,6 +179,17 @@ namespace MWPhysics
 
     void PhysicsSystem::scaleObject(const MWWorld::Ptr& ptr)
     {
+        ObjectMap::iterator obj(mObjects.find(ptr.getRefData().getHandle()));
+        if(obj != mObjects.end())
+        {
+            Object *object = obj->second;
+            mDynamicsWorld->removeCollisionObject(object->getCollisionObject());
+            object->resetCollisionObject();
+            mDynamicsWorld->addCollisionObject(object->getCollisionObject());
+            return;
+        }
+
+        // TODO: Check actors
     }
 
 

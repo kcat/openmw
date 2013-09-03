@@ -29,5 +29,15 @@ Object::~Object()
     delete mMotionState;
 }
 
+void Object::resetCollisionObject()
+{
+    delete mCollisionObject;
+
+    const Ogre::Vector3 &scale = mPtr.getRefData().getBaseNode()->getScale();
+    btRigidBody::btRigidBodyConstructionInfo cinf(0.0f, mMotionState, mShape->getScaledCollisionShape(scale.x));
+    mCollisionObject = new btRigidBody(cinf);
+
+    mCollisionObject->setUserPointer(static_cast<ObjectInfo*>(this));
+}
 
 }
