@@ -72,7 +72,7 @@ void Actor::resetCollisionObject()
 
 void Actor::setWorldTransform(const btTransform &worldTrans)
 {
-    //mPhysics->queueWorldMovement(mPtr, mBBoxTransform.inverseTimes(worldTrans));
+    mPhysics->queueWorldMovement(mPtr, mBBoxTransform.inverseTimes(worldTrans));
 }
 
 void Actor::getWorldTransform(btTransform &worldTrans) const

@@ -35,6 +35,9 @@ namespace MWPhysics
         { return mCollisionObject; }
 
         void resetCollisionObject();
+
+        void updateTransform(const btTransform &newTrans)
+        { mCurrentTrans = newTrans; }
     };
 }
 

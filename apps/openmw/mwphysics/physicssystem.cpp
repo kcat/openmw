@@ -337,10 +337,24 @@ namespace MWPhysics
                 const ESM::Position &refpos = iter->first.getRefData().getPosition();
                 Ogre::Vector3 position(refpos.pos);
 
-                Ogre::Vector3 newpos = (Ogre::Quaternion(Ogre::Radian(refpos.rot[2]), Ogre::Vector3::NEGATIVE_UNIT_Z)*
-                                        Ogre::Quaternion(Ogre::Radian(refpos.rot[1]), Ogre::Vector3::NEGATIVE_UNIT_Y)*
-                                        Ogre::Quaternion(Ogre::Radian(refpos.rot[0]), Ogre::Vector3::UNIT_X)) *
-                                       iter->second*mTimeAccum + position;
+                Ogre::Matrix3 mat3;
+                mat3.FromEulerAnglesZYX(Ogre::Radian(-refpos.rot[2]), Ogre::Radian(-refpos.rot[1]), Ogre::Radian(refpos.rot[0]));
+                Ogre::Vector3 newpos = mat3 * iter->second*mTimeAccum + position;
+
+                ActorMap::iterator actor = mActors.find(iter->first.getRefData().getHandle());
+                if(actor != mActors.end())
+                {
+                    // Rotate actors around Z only
+                    mat3.FromAngleAxis(Ogre::Vector3::UNIT_Z, Ogre::Radian(-refpos.rot[2]));
+                    btTransform trans(btMatrix3x3(mat3[0][0], mat3[0][1], mat3[0][2],
+                                                  mat3[1][0], mat3[1][1], mat3[1][2],
+                                                  mat3[2][0], mat3[2][1], mat3[2][2]),
+                                      btVector3(newpos.x, newpos.y, newpos.z));
+                    actor->second->updateTransform(trans);
+                }
+
+                // Bullet does not seem to call btMotionState::setWorldTransform for kinematic
+                // objects, so queue world movement here.
                 mMovementResults.push_back(std::make_pair(iter->first, newpos));
             }
 
