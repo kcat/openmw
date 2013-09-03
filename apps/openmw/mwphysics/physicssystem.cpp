@@ -142,9 +142,8 @@ namespace MWPhysics
     void PhysicsSystem::addObject(const MWWorld::Ptr &ptr, bool placeable)
     {
         NifBullet::BulletShapeManager &shapeMgr = NifBullet::BulletShapeManager::getSingleton();
-        std::string name = ptr.getClass().getModel(ptr);
-        NifBullet::BulletShapePtr shape = shapeMgr.load(Misc::StringUtils::toLower(name),
-                                                        Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+        const std::string name = Misc::StringUtils::lowerCase(ptr.getClass().getModel(ptr));
+        NifBullet::BulletShapePtr shape = shapeMgr.load(name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
         if(!shape->getCollisionShape())
             return;
@@ -161,9 +160,8 @@ namespace MWPhysics
     void PhysicsSystem::addActor(const MWWorld::Ptr &ptr)
     {
         NifBullet::BulletShapeManager &shapeMgr = NifBullet::BulletShapeManager::getSingleton();
-        std::string name = ptr.getClass().getModel(ptr);
-        NifBullet::BulletShapePtr shape = shapeMgr.load(Misc::StringUtils::toLower(name),
-                                                        Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+        const std::string name = Misc::StringUtils::lowerCase(ptr.getClass().getModel(ptr));
+        NifBullet::BulletShapePtr shape = shapeMgr.load(name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
         if(shape->getBBoxRadius() == btVector3(0.0f, 0.0f, 0.0f))
         {
