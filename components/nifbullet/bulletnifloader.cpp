@@ -46,8 +46,9 @@ const Nif::Node* BulletShapeLoader::findRootCollisionNode(const Nif::Node *node)
     {
         for(size_t i = 0;i < ninode->children.length();i++)
         {
-            node = ninode->children[i].getPtr();
-            if(node && (node=findRootCollisionNode(node)))
+            if(ninode->children[i].empty())
+                continue;
+            if((node=findRootCollisionNode(ninode->children[i].getPtr())) != NULL)
                 return node;
         }
     }
@@ -73,8 +74,8 @@ void BulletShapeLoader::buildFromRootCollision(const Nif::Node *node, BulletShap
     {
         for(size_t i = 0;i < ninode->children.length();i++)
         {
-            node = ninode->children[i].getPtr();
-            if(node) buildFromRootCollision(node, shape);
+            if(!ninode->children[i].empty())
+                buildFromRootCollision(ninode->children[i].getPtr(), shape);
         }
     }
 }
@@ -105,8 +106,8 @@ void BulletShapeLoader::buildFromModel(const Nif::Node* node, BulletShape* shape
     {
         for(size_t i = 0;i < ninode->children.length();i++)
         {
-            node = ninode->children[i].getPtr();
-            if(node) buildFromModel(node, shape);
+            if(!ninode->children[i].empty())
+                buildFromModel(ninode->children[i].getPtr(), shape);
         }
     }
 }
