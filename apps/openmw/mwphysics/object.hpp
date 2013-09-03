@@ -1,6 +1,8 @@
 #ifndef MWPHYSICS_OBJECT_HPP
 #define MWPHYSICS_OBJECT_HPP
 
+#include <LinearMath/btMotionState.h>
+
 #include <components/nifbullet/bulletshape.hpp>
 
 #include "../mwworld/ptr.hpp"
@@ -8,7 +10,6 @@
 #include "physicssystem.hpp"
 
 class btCollisionObject;
-class btMotionState;
 class btTransform;
 
 namespace MWPhysics
@@ -28,15 +29,21 @@ namespace MWPhysics
         { return mPtr; }
     };
 
-    class Object : public ObjectInfo
+    class Object : public ObjectInfo, public btMotionState
     {
-        NifBullet::BulletShapePtr mShape;
+        PhysicsSystem *mPhysics;
 
-        btMotionState *mMotionState;
+        NifBullet::BulletShapePtr mShape;
         btCollisionObject *mCollisionObject;
 
+        btTransform mCurrentTrans;
+
+    protected:
+        virtual void setWorldTransform(const btTransform &worldTrans);
+        virtual void getWorldTransform(btTransform &worldTrans) const;
+
     public:
-        Object(const MWWorld::Ptr &ptr, const NifBullet::BulletShapePtr &shape, const btTransform &startTrans);
+        Object(const MWWorld::Ptr &ptr, const NifBullet::BulletShapePtr &shape, PhysicsSystem *phys);
         virtual ~Object();
 
         btCollisionObject *getCollisionObject() const

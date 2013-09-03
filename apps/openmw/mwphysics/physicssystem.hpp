@@ -13,6 +13,8 @@ namespace Ogre
     class Ray;
 }
 
+class btTransform;
+
 class btDefaultCollisionConfiguration;
 class btCollisionDispatcher;
 class btOverlappingPairCache;
@@ -111,6 +113,9 @@ namespace MWPhysics
             bool toggleCollisionDebug();
 
             void debugDraw() const;
+
+            /// Queues movement to report back to world. USED ONLY BY MOTION STATE HANDLERS!
+            void queueWorldMovement(const MWWorld::Ptr &ptr, const btTransform &worldTrans);
 
         private:
             PtrVelocityList mMovementQueue;

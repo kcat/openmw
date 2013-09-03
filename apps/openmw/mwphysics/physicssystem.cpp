@@ -141,15 +141,7 @@ namespace MWPhysics
         if(placeable && !shape->hasRootCollision())
             return;
 
-        const ESM::Position &pos = ptr.getRefData().getPosition();
-        btQuaternion rx, ry, rz;
-        rx.setRotation(btVector3(1.0f, 0.0f, 0.0f), -pos.rot[0]);
-        ry.setRotation(btVector3(0.0f, 1.0f, 0.0f), -pos.rot[1]);
-        rz.setRotation(btVector3(0.0f, 0.0f, 1.0f), -pos.rot[2]);
-
-        btTransform trans(rx*ry*rz, btVector3(pos.pos[0], pos.pos[1], pos.pos[2]));
-
-        Object *obj = new Object(ptr, shape, trans);
+        Object *obj = new Object(ptr, shape, this);
         mObjects.insert(std::make_pair(ptr.getRefData().getHandle(), obj));
 
         mDynamicsWorld->addCollisionObject(obj->getCollisionObject());
@@ -335,4 +327,13 @@ namespace MWPhysics
     {
         mDebugDraw->update();
     }
+
+
+    void PhysicsSystem::queueWorldMovement(const MWWorld::Ptr &ptr, const btTransform &worldTrans)
+    {
+        // TODO: Handle rotation as well. Ogre::Matrix3::ToEulerAnglesXYZ should get what we need.
+        const btVector3 &pos = worldTrans.getOrigin();
+        mMovementResults.push_back(std::make_pair(ptr, Ogre::Vector3(pos.x(), pos.y(), pos.z())));
+    }
+
 }
