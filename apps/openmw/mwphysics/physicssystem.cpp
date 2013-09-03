@@ -21,9 +21,13 @@
 
 namespace
 {
-    struct RayResultCallback : public btCollisionWorld::RayResultCallback
+    struct FilteredRayResultCallback : public btCollisionWorld::RayResultCallback
     {
-        RayResultCallback()
+    private:
+        MWWorld::Ptr mFilter;
+
+    public:
+        FilteredRayResultCallback(const MWWorld::Ptr &filter) : mFilter(filter)
         {
         }
 
@@ -32,8 +36,14 @@ namespace
             // Caller already does the filter on the m_closestHitFraction
             btAssert(rayResult.m_hitFraction <= m_closestHitFraction);
 
-            m_closestHitFraction = rayResult.m_hitFraction;
             m_collisionObject = rayResult.m_collisionObject;
+            MWPhysics::ObjectInfo *inf;
+            if((inf=static_cast<MWPhysics::ObjectInfo*>(m_collisionObject->getUserPointer())) != NULL)
+            {
+                if(inf->getPtr() == mFilter)
+                    return btScalar(1.0f);
+            }
+            m_closestHitFraction = rayResult.m_hitFraction;
 
             return rayResult.m_hitFraction;
         }
@@ -249,17 +259,17 @@ namespace MWPhysics
     }
 
 
-    std::pair<float,MWWorld::Ptr> PhysicsSystem::getFacedHandle(const Ogre::Ray &ray, float queryDistance) const
+    std::pair<float,MWWorld::Ptr> PhysicsSystem::getFacedHandle(const MWWorld::Ptr &filter, const Ogre::Ray &ray, float queryDistance) const
     {
         const Ogre::Vector3 &origin_ = ray.getOrigin();
         const Ogre::Vector3 dest_ = ray.getPoint(queryDistance);
 
         btVector3 from(origin_.x, origin_.y, origin_.z);
         btVector3 to(dest_.x, dest_.y, dest_.z);
-        RayResultCallback callback;
+        FilteredRayResultCallback callback(filter);
         mDynamicsWorld->rayTest(from, to, callback);
 
-        if(!callback.m_collisionObject)
+        if(!(callback.m_closestHitFraction < 1.0f))
             return std::make_pair(queryDistance,MWWorld::Ptr());
         const ObjectInfo *info = static_cast<const ObjectInfo*>(callback.m_collisionObject->getUserPointer());
         return std::make_pair(callback.m_closestHitFraction*queryDistance, info->getPtr());
