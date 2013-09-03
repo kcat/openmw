@@ -119,7 +119,7 @@ namespace MWPhysics
 
         mSolver = new btSequentialImpulseConstraintSolver();
         mPairCache = new btSortedOverlappingPairCache();
-        mBroadphase = new btDbvtBroadphase();
+        mBroadphase = new btDbvtBroadphase(mPairCache);
         mDynamicsWorld = new btDiscreteDynamicsWorld(mDispatcher, mBroadphase, mSolver, mCollisionConfiguration);
         mDynamicsWorld->setGravity(btVector3(0.0f, 0.0f, -627.2f));
 
