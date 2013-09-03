@@ -4,6 +4,10 @@
 #include <OgreResourceManager.h>
 #include <OgreResource.h>
 
+#include <LinearMath/btVector3.h>
+#include <LinearMath/btTransform.h>
+
+
 class btCollisionShape;
 class btStridingMeshInterface;
 
@@ -23,6 +27,9 @@ class BulletShape : public Ogre::Resource
 
     // If this is false, "placeable" objects will not have collisions
     bool mHasRootCollision;
+
+    btVector3 mBBoxRadius;
+    btTransform mBBoxTransform;
 
     static btCollisionShape *duplicateCollisionShape(btCollisionShape *shape);
 

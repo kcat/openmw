@@ -27,6 +27,9 @@ BulletShape::BulletShape(Ogre::ResourceManager* creator, const Ogre::String &nam
                          Ogre::ManualResourceLoader *loader)
   : Ogre::Resource(creator, name, handle, group, isManual, loader)
   , mCollisionShape(0)
+  , mHasRootCollision(false)
+  , mBBoxRadius(btVector3(0.0f, 0.0f, 0.0f))
+  , mBBoxTransform(btTransform::getIdentity())
 {
     /* For consistency with StringInterface, but we don't add any parameters here
      * That's because the Resource implementation of StringInterface is to
@@ -60,6 +63,11 @@ void BulletShape::unloadImpl()
 
     std::for_each(mMeshIfaces.begin(), mMeshIfaces.end(), DeleteMe<btStridingMeshInterface>());
     mMeshIfaces.clear();
+
+    mHasRootCollision = false;
+
+    mBBoxRadius = btVector3(0.0f, 0.0f, 0.0f);
+    mBBoxTransform = btTransform::getIdentity();
 }
 
 size_t BulletShape::calculateSize() const

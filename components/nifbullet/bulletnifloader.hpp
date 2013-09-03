@@ -23,6 +23,8 @@ class BulletShapeLoader
     void buildFromRootCollision(const Nif::Node *node, BulletShape *shape);
     void buildFromModel(const Nif::Node *node, BulletShape *shape);
 
+    bool getBoundingBox(const Nif::Node *node, BulletShape *shape);
+
 public:
     void load(const std::string &name, BulletShape *shape);
 };

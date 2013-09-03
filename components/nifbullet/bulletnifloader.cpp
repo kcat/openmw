@@ -29,9 +29,10 @@ void BulletShapeLoader::load(const std::string &name, BulletShape *shape)
         buildFromRootCollision(colroot, shape);
     else
         buildFromModel(node, shape);
-
     if(!shape->getCollisionShape())
         std::cerr<< "No collision shape found for "<<name <<std::endl;
+
+    getBoundingBox(node, shape);
 }
 
 
@@ -139,6 +140,39 @@ void BulletShapeLoader::loadTriShape(const Nif::NiTriShape *trishape, BulletShap
     btCompoundShape *comp = (curshape ? static_cast<btCompoundShape*>(curshape) : new btCompoundShape());
     comp->addChildShape(bttrans, new btBvhTriangleMeshShape(mesh, true));
     shape->setCollisionShape(comp);
+}
+
+
+bool BulletShapeLoader::getBoundingBox(const Nif::Node* node, BulletShape* shape)
+{
+    if(node->hasBounds && node->name == "Bounding Box")
+    {
+        const Ogre::Matrix3 &mat3 = node->boundRot;
+        shape->mBBoxTransform.setBasis(btMatrix3x3(mat3[0][0], mat3[0][1], mat3[0][2],
+                                                   mat3[1][0], mat3[1][1], mat3[1][2],
+                                                   mat3[2][0], mat3[2][1], mat3[2][2]));
+        shape->mBBoxTransform.setOrigin(btVector3(node->boundPos.x, node->boundPos.y, node->boundPos.z));
+
+        shape->mBBoxRadius.setX(node->boundXYZ.x);
+        shape->mBBoxRadius.setY(node->boundXYZ.y);
+        shape->mBBoxRadius.setZ(node->boundXYZ.z);
+
+        return true;
+    }
+
+    const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
+    if(ninode != NULL)
+    {
+        for(size_t i = 0;i < ninode->children.length();i++)
+        {
+            if(ninode->children[i].empty())
+                continue;
+            if(getBoundingBox(ninode->children[i].getPtr(), shape))
+                return true;
+        }
+    }
+
+    return false;
 }
 
 }
