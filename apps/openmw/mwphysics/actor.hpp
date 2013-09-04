@@ -8,6 +8,7 @@
 #include "physicssystem.hpp"
 #include "object.hpp"
 
+class btCylinderShape;
 class btActionInterface;
 
 
@@ -21,14 +22,10 @@ namespace MWPhysics
 
         NifBullet::BulletShapePtr mShape;
         btTransform mBBoxTransform;
-        btCollisionShape *mCollisionShape;
+        btCylinderShape *mCollisionShape;
         btCollisionObject *mCollisionObject;
 
         CharacterAction *mActionIface;
-
-        btTransform mCurrentTrans;
-
-    protected:
 
     public:
         Actor(const MWWorld::Ptr &ptr, const NifBullet::BulletShapePtr &shape, PhysicsSystem *phys);
@@ -40,13 +37,11 @@ namespace MWPhysics
 
         void resetCollisionObject();
 
-        const btTransform &getTransform() const
-        { return mCurrentTrans; }
-        void setTransform(const btTransform &newTrans)
-        { mCurrentTrans = newTrans; }
+        /// Gets the collision object's current position, corrected for the bounding box offset
+        btVector3 getOrigin() const;
 
-        const btTransform& getBBoxTransform() const
-        { return mBBoxTransform; }
+        /// Sets the collision object's current position, correcting for the bounding box offset
+        void setOrigin(const btVector3 &newOrigin);
 
         void updateVelocity(const Ogre::Vector3 &velocity);
     };

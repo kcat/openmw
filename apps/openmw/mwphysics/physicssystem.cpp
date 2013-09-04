@@ -222,28 +222,13 @@ namespace MWPhysics
             const float *pos = ptr.getRefData().getPosition().pos;
 
             Actor *actor = aiter->second;
-            btTransform trans = actor->getTransform();
-            trans.setOrigin(btVector3(pos[0], pos[1], pos[2]));
-            actor->setTransform(trans);
+            actor->setOrigin(btVector3(pos[0], pos[1], pos[2]));
         }
     }
 
     void PhysicsSystem::rotateObject(const MWWorld::Ptr& ptr)
     {
-        ActorMap::iterator aiter(mActors.find(ptr.getRefData().getHandle()));
-        if(aiter != mActors.end())
-        {
-            const float *rot = ptr.getRefData().getPosition().rot;
-            Ogre::Matrix3 mat3;
-            mat3.FromEulerAnglesZYX(Ogre::Radian(-rot[2]), Ogre::Radian(-rot[1]), Ogre::Radian(rot[0]));
-
-            Actor *actor = aiter->second;
-            btTransform trans = actor->getTransform();
-            trans.setBasis(btMatrix3x3(mat3[0][0], mat3[0][1], mat3[0][2],
-                                       mat3[1][0], mat3[1][1], mat3[1][2],
-                                       mat3[2][0], mat3[2][1], mat3[2][2]));
-            actor->setTransform(trans);
-        }
+        /* Nothing to do for actors. */
     }
 
     void PhysicsSystem::scaleObject(const MWWorld::Ptr& ptr)
@@ -360,9 +345,20 @@ namespace MWPhysics
 
     void PhysicsSystem::queueObjectMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &movement)
     {
-        ActorMap::iterator actor = mActors.find(ptr.getRefData().getHandle());
-        if(actor != mActors.end())
-            actor->second->updateVelocity(movement);
+        ActorMap::iterator aiter = mActors.find(ptr.getRefData().getHandle());
+        if(aiter != mActors.end())
+        {
+            const float *rot = ptr.getRefData().getPosition().rot;
+            Ogre::Matrix3 mat3;
+            if(1/*isflying || isswimming*/)
+                mat3.FromEulerAnglesZYX(Ogre::Radian(-rot[2]), Ogre::Radian(-rot[1]), Ogre::Radian(rot[0]));
+            else
+                mat3.FromAngleAxis(Ogre::Vector3::UNIT_Z, Ogre::Radian(-rot[2]));
+            Ogre::Vector3 velocity = mat3 * movement;
+
+            Actor *actor = aiter->second;
+            actor->updateVelocity(velocity);
+        }
     }
 
     const PtrPositionList& PhysicsSystem::applyQueuedMovement(float dt)
@@ -380,7 +376,8 @@ namespace MWPhysics
         for(;aiter != mActors.end();aiter++)
         {
             Actor *actor = aiter->second;
-            queueWorldMovement(actor->getPtr(), actor->getTransform());
+            btVector3 pos = actor->getOrigin();
+            mMovementResults.push_back(std::make_pair(actor->getPtr(), Ogre::Vector3(pos.x(), pos.y(), pos.z())));
             actor->updateVelocity(Ogre::Vector3(0.0f));
         }
 
