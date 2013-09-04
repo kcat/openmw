@@ -39,7 +39,7 @@ namespace MWPhysics
     class Object;
     class Actor;
 
-    typedef std::vector<std::pair<MWWorld::Ptr,Ogre::Vector3> > PtrVelocityList;
+    typedef std::vector<std::pair<MWWorld::Ptr,Ogre::Vector3> > PtrPositionList;
 
     class PhysicsSystem
     {
@@ -114,18 +114,17 @@ namespace MWPhysics
             /// be overwritten. Valid until the next call to applyQueuedMovement.
             void queueObjectMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &velocity);
 
-            const PtrVelocityList& applyQueuedMovement(float dt);
+            const PtrPositionList& applyQueuedMovement(float dt);
 
             bool toggleCollisionDebug();
 
             void debugDraw() const;
 
-            /// Queues movement to report back to world. USED ONLY BY MOTION STATE HANDLERS!
+            /// Queues movement to report back to world. USED ONLY BY PHYSICS OBJECT HANDLERS!
             void queueWorldMovement(const MWWorld::Ptr &ptr, const btTransform &worldTrans);
 
         private:
-            PtrVelocityList mMovementQueue;
-            PtrVelocityList mMovementResults;
+            PtrPositionList mMovementResults;
 
             float mTimeAccum;
 

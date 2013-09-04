@@ -363,45 +363,29 @@ namespace MWPhysics
 
     void PhysicsSystem::queueObjectMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &movement)
     {
-        PtrVelocityList::iterator iter = mMovementQueue.begin();
-        for(;iter != mMovementQueue.end();iter++)
-        {
-            if(iter->first == ptr)
-            {
-                iter->second = movement;
-                return;
-            }
-        }
-
-        mMovementQueue.push_back(std::make_pair(ptr, movement));
+        ActorMap::iterator actor = mActors.find(ptr.getRefData().getHandle());
+        if(actor != mActors.end())
+            actor->second->updateVelocity(movement);
     }
 
-    const PtrVelocityList& PhysicsSystem::applyQueuedMovement(float dt)
+    const PtrPositionList& PhysicsSystem::applyQueuedMovement(float dt)
     {
         mMovementResults.clear();
 
         mTimeAccum += dt;
         if(mTimeAccum >= 1.0f/60.0f)
         {
-            PtrVelocityList::iterator iter = mMovementQueue.begin();
-            for(;iter != mMovementQueue.end();iter++)
-            {
-                ActorMap::iterator actor = mActors.find(iter->first.getRefData().getHandle());
-                if(actor != mActors.end())
-                    actor->second->updateVelocity(iter->second);
-            }
-
             mDynamicsWorld->stepSimulation(mTimeAccum, 4);
             mTimeAccum = 0.0f;
-
-            ActorMap::const_iterator aiter = mActors.begin();
-            for(;aiter != mActors.end();aiter++)
-            {
-                const Actor *actor = aiter->second;
-                queueWorldMovement(actor->getPtr(), actor->getTransform());
-            }
         }
-        mMovementQueue.clear();
+
+        ActorMap::const_iterator aiter = mActors.begin();
+        for(;aiter != mActors.end();aiter++)
+        {
+            Actor *actor = aiter->second;
+            queueWorldMovement(actor->getPtr(), actor->getTransform());
+            actor->updateVelocity(Ogre::Vector3(0.0f));
+        }
 
         return mMovementResults;
     }

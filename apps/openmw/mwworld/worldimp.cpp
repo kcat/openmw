@@ -1068,9 +1068,9 @@ namespace MWWorld
 
         processDoors(duration);
 
-        const MWPhysics::PtrVelocityList &results = mPhysics->applyQueuedMovement(duration);
-        MWPhysics::PtrVelocityList::const_iterator player(results.end());
-        for(MWPhysics::PtrVelocityList::const_iterator iter(results.begin());iter != results.end();iter++)
+        const MWPhysics::PtrPositionList &results = mPhysics->applyQueuedMovement(duration);
+        MWPhysics::PtrPositionList::const_iterator player(results.end());
+        for(MWPhysics::PtrPositionList::const_iterator iter(results.begin());iter != results.end();iter++)
         {
             if(iter->first.getRefData().getHandle() == "player")
             {
