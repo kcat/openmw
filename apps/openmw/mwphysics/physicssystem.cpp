@@ -57,14 +57,12 @@ namespace MWPhysics
     class Heightmap : public ObjectInfo
     {
         btHeightfieldTerrainShape *mShape;
-        btMotionState *mMotionState;
         btCollisionObject *mCollisionObject;
 
     public:
         Heightmap(int x, int y, const float *heights, float yoffset, float triSize, int sqrtVerts)
           : ObjectInfo(MWWorld::Ptr())
           , mShape(0)
-          , mMotionState(0)
           , mCollisionObject(0)
         {
             // find the minimum and maximum heights (needed for bullet)
@@ -89,10 +87,10 @@ namespace MWPhysics
                                   btVector3((x+0.5f) * triSize * (sqrtVerts-1.0f),
                                             (y+0.5f) * triSize * (sqrtVerts-1.0f),
                                             (maxh+minh)*0.5f));
-            mMotionState = new btDefaultMotionState(transform);
 
-            btRigidBody::btRigidBodyConstructionInfo cinf = btRigidBody::btRigidBodyConstructionInfo(0.0f, mMotionState, mShape);
-            mCollisionObject = new btRigidBody(cinf);
+            mCollisionObject = new btCollisionObject;
+            mCollisionObject->setCollisionShape(mShape);
+            mCollisionObject->setWorldTransform(transform);
 
             // Explicitly downcast to ensure the user pointer can be directly casted back to
             // ObjectInfo.
@@ -102,7 +100,6 @@ namespace MWPhysics
         virtual ~Heightmap()
         {
             delete mCollisionObject;
-            delete mMotionState;
             delete mShape;
         }
 
