@@ -27,6 +27,9 @@ namespace MWPhysics
 
         const MWWorld::Ptr& getPtr() const
         { return mPtr; }
+
+        void updatePtr(const MWWorld::Ptr &ptr)
+        { mPtr = ptr; }
     };
 
     class Object : public ObjectInfo, public btMotionState

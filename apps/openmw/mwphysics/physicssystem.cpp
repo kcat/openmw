@@ -175,6 +175,24 @@ namespace MWPhysics
         mDynamicsWorld->addCollisionObject(actor->getCollisionObject(),
                                            btBroadphaseProxy::CharacterFilter,
                                            btBroadphaseProxy::AllFilter);
+        mDynamicsWorld->addAction(actor->getActionInterface());
+    }
+
+    void PhysicsSystem::updateObject(const std::string &handle, const MWWorld::Ptr &ptr)
+    {
+        ObjectMap::iterator obj = mObjects.find(handle);
+        if(obj != mObjects.end())
+        {
+            obj->second->updatePtr(ptr);
+            return;
+        }
+
+        ActorMap::iterator actor = mActors.find(handle);
+        if(actor != mActors.end())
+        {
+            actor->second->updatePtr(ptr);
+            return;
+        }
     }
 
     void PhysicsSystem::removeObject(const std::string &handle)
@@ -191,6 +209,7 @@ namespace MWPhysics
         ActorMap::iterator actor = mActors.find(handle);
         if(actor != mActors.end())
         {
+            mDynamicsWorld->removeAction(actor->second->getActionInterface());
             mDynamicsWorld->removeCollisionObject(actor->second->getCollisionObject());
             delete actor->second;
             mActors.erase(actor);
@@ -200,10 +219,34 @@ namespace MWPhysics
 
     void PhysicsSystem::moveObject(const MWWorld::Ptr& ptr)
     {
+        ActorMap::iterator aiter(mActors.find(ptr.getRefData().getHandle()));
+        if(aiter != mActors.end())
+        {
+            const float *pos = ptr.getRefData().getPosition().pos;
+
+            Actor *actor = aiter->second;
+            btTransform trans = actor->getTransform();
+            trans.setOrigin(btVector3(pos[0], pos[1], pos[2]));
+            actor->setTransform(trans);
+        }
     }
 
     void PhysicsSystem::rotateObject(const MWWorld::Ptr& ptr)
     {
+        ActorMap::iterator aiter(mActors.find(ptr.getRefData().getHandle()));
+        if(aiter != mActors.end())
+        {
+            const float *rot = ptr.getRefData().getPosition().rot;
+            Ogre::Matrix3 mat3;
+            mat3.FromEulerAnglesZYX(Ogre::Radian(-rot[2]), Ogre::Radian(-rot[1]), Ogre::Radian(rot[0]));
+
+            Actor *actor = aiter->second;
+            btTransform trans = actor->getTransform();
+            trans.setBasis(btMatrix3x3(mat3[0][0], mat3[0][1], mat3[0][2],
+                                       mat3[1][0], mat3[1][1], mat3[1][2],
+                                       mat3[2][0], mat3[2][1], mat3[2][2]));
+            actor->setTransform(trans);
+        }
     }
 
     void PhysicsSystem::scaleObject(const MWWorld::Ptr& ptr)
@@ -222,9 +265,11 @@ namespace MWPhysics
         if(act != mActors.end())
         {
             Actor *actor = act->second;
+            mDynamicsWorld->removeAction(actor->getActionInterface());
             mDynamicsWorld->removeCollisionObject(actor->getCollisionObject());
             actor->resetCollisionObject();
             mDynamicsWorld->addCollisionObject(actor->getCollisionObject());
+            mDynamicsWorld->addAction(actor->getActionInterface());
             return;
         }
     }
@@ -338,36 +383,23 @@ namespace MWPhysics
         mTimeAccum += dt;
         if(mTimeAccum >= 1.0f/60.0f)
         {
-            const MWBase::World *world = MWBase::Environment::get().getWorld();
             PtrVelocityList::iterator iter = mMovementQueue.begin();
             for(;iter != mMovementQueue.end();iter++)
             {
-                const ESM::Position &refpos = iter->first.getRefData().getPosition();
-                Ogre::Vector3 position(refpos.pos);
-
-                Ogre::Matrix3 mat3;
-                mat3.FromEulerAnglesZYX(Ogre::Radian(-refpos.rot[2]), Ogre::Radian(-refpos.rot[1]), Ogre::Radian(refpos.rot[0]));
-                Ogre::Vector3 newpos = mat3 * iter->second*mTimeAccum + position;
-
                 ActorMap::iterator actor = mActors.find(iter->first.getRefData().getHandle());
                 if(actor != mActors.end())
-                {
-                    // Rotate actors around Z only
-                    mat3.FromAngleAxis(Ogre::Vector3::UNIT_Z, Ogre::Radian(-refpos.rot[2]));
-                    btTransform trans(btMatrix3x3(mat3[0][0], mat3[0][1], mat3[0][2],
-                                                  mat3[1][0], mat3[1][1], mat3[1][2],
-                                                  mat3[2][0], mat3[2][1], mat3[2][2]),
-                                      btVector3(newpos.x, newpos.y, newpos.z));
-                    actor->second->updateTransform(trans);
-                }
-
-                // Bullet does not seem to call btMotionState::setWorldTransform for kinematic
-                // objects, so queue world movement here.
-                mMovementResults.push_back(std::make_pair(iter->first, newpos));
+                    actor->second->updateVelocity(iter->second);
             }
 
-            mDynamicsWorld->stepSimulation(mTimeAccum);
+            mDynamicsWorld->stepSimulation(mTimeAccum, 4);
             mTimeAccum = 0.0f;
+
+            ActorMap::const_iterator aiter = mActors.begin();
+            for(;aiter != mActors.end();aiter++)
+            {
+                const Actor *actor = aiter->second;
+                queueWorldMovement(actor->getPtr(), actor->getTransform());
+            }
         }
         mMovementQueue.clear();
 

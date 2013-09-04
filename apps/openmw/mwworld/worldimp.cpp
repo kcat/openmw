@@ -856,6 +856,7 @@ namespace MWWorld
                         MWWorld::Class::get(ptr).copyToCell(ptr, newCell, pos);
 
                     mRendering->updateObjectCell(ptr, copy);
+                    mPhysics->updateObject(ptr.getRefData().getHandle(), copy);
 
                     MWBase::MechanicsManager *mechMgr = MWBase::Environment::get().getMechanicsManager();
                     mechMgr->updateCell(ptr, copy);

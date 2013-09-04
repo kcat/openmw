@@ -169,6 +169,7 @@ namespace MWWorld
 
         MWWorld::Ptr player = world->getPlayer().getPlayer();
         mRendering.updatePlayerPtr(player);
+        mPhysics.updateObject(player.getRefData().getHandle(), player);
 
         if (adjustPlayerPos) {
             world->moveObject(player, pos.pos[0], pos.pos[1], pos.pos[2]);

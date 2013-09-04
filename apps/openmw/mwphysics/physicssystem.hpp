@@ -69,6 +69,9 @@ namespace MWPhysics
 
             void addActor(const MWWorld::Ptr& ptr);
 
+            /// Updates the named object/actor with a new Ptr (*MUST* have the same handle!)
+            void updateObject(const std::string &handle, const MWWorld::Ptr &ptr);
+
             // have to keep this as handle for now as unloadcell only knows scenenode names
             void removeObject(const std::string& handle);
 

@@ -1,8 +1,6 @@
 #ifndef MWPHYSICS_ACTOR_HPP
 #define MWPHYSICS_ACTOR_HPP
 
-#include <LinearMath/btMotionState.h>
-
 #include <components/nifbullet/bulletshape.hpp>
 
 #include "../mwworld/ptr.hpp"
@@ -10,9 +8,14 @@
 #include "physicssystem.hpp"
 #include "object.hpp"
 
+class btActionInterface;
+
+
 namespace MWPhysics
 {
-    class Actor : public ObjectInfo, public btMotionState
+    class CharacterAction;
+
+    class Actor : public ObjectInfo
     {
         PhysicsSystem *mPhysics;
 
@@ -21,11 +24,11 @@ namespace MWPhysics
         btCollisionShape *mCollisionShape;
         btCollisionObject *mCollisionObject;
 
+        CharacterAction *mActionIface;
+
         btTransform mCurrentTrans;
 
     protected:
-        virtual void setWorldTransform(const btTransform &worldTrans);
-        virtual void getWorldTransform(btTransform &worldTrans) const;
 
     public:
         Actor(const MWWorld::Ptr &ptr, const NifBullet::BulletShapePtr &shape, PhysicsSystem *phys);
@@ -33,11 +36,19 @@ namespace MWPhysics
 
         btCollisionObject *getCollisionObject() const
         { return mCollisionObject; }
+        btActionInterface *getActionInterface() const;
 
         void resetCollisionObject();
 
-        void updateTransform(const btTransform &newTrans)
+        const btTransform &getTransform() const
+        { return mCurrentTrans; }
+        void setTransform(const btTransform &newTrans)
         { mCurrentTrans = newTrans; }
+
+        const btTransform& getBBoxTransform() const
+        { return mBBoxTransform; }
+
+        void updateVelocity(const Ogre::Vector3 &velocity);
     };
 }
 
