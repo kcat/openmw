@@ -1228,7 +1228,7 @@ namespace MWWorld
 
         mWorldScene->update (duration, paused);
 
-        doPhysics (duration);
+        doPhysics (paused ? 0.0f : duration);
 
         performUpdateSceneQueries ();
 
