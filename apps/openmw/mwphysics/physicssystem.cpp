@@ -292,7 +292,20 @@ namespace MWPhysics
 
     bool PhysicsSystem::toggleCollisionMode()
     {
-        return false;
+        ActorMap::iterator aiter = mActors.find("player");
+        if(aiter == mActors.end())
+            return false;
+
+        Actor *actor = aiter->second;
+        bool on = !actor->getCollisionObject()->getBroadphaseHandle()->m_collisionFilterMask;
+
+        mDynamicsWorld->removeCollisionObject(actor->getCollisionObject());
+        mDynamicsWorld->addCollisionObject(actor->getCollisionObject(),
+                                           btBroadphaseProxy::CharacterFilter,
+                                           (on ? btBroadphaseProxy::AllFilter : 0));
+        actor->getActionInterface()->setGravity(on/*&& !flying && !swimming*/ ? -627.2f : 0.0f);
+
+        return on;
     }
 
 
@@ -360,15 +373,17 @@ namespace MWPhysics
         ActorMap::iterator aiter = mActors.find(ptr.getRefData().getHandle());
         if(aiter != mActors.end())
         {
+            Actor *actor = aiter->second;
+
             const float *rot = ptr.getRefData().getPosition().rot;
             Ogre::Matrix3 mat3;
-            if(0/*isflying || isswimming*/)
+            if(0/*isflying || isswimming*/ ||
+               !actor->getCollisionObject()->getBroadphaseHandle()->m_collisionFilterMask)
                 mat3.FromEulerAnglesZYX(Ogre::Radian(-rot[2]), Ogre::Radian(-rot[1]), Ogre::Radian(rot[0]));
             else
                 mat3.FromAngleAxis(Ogre::Vector3::UNIT_Z, Ogre::Radian(-rot[2]));
             Ogre::Vector3 velocity = mat3 * movement;
 
-            Actor *actor = aiter->second;
             actor->updateVelocity(velocity);
         }
     }
