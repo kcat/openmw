@@ -90,6 +90,9 @@ std::pair<btScalar,btVector3> CharacterController::sweepTrace(btCollisionWorld *
 
 bool CharacterController::checkOnGround(btCollisionWorld *collisionWorld) const
 {
+    if(!(mGravity < 0.0f && mVerticalVelocity <= 0.0f))
+        return false;
+
     btTransform start = mGhostObject->getWorldTransform();
     btTransform end(start.getBasis(), start.getOrigin() - getUpAxisDirections()[mUpAxis]*2.0f);
 
@@ -273,7 +276,7 @@ void CharacterController::stepForwardAndStrafe(btCollisionWorld *collisionWorld,
 
         if(stepMove(collisionWorld))
         {
-            mWasOnGround = true; // if not flying or swimming
+            mWasOnGround = (mGravity < 0.0f && mVerticalVelocity <= 0.0f);
             distance2 = (mCurrentPosition - mTargetPosition).length2();
             continue;
         }
@@ -352,26 +355,31 @@ void CharacterController::playerStep(btCollisionWorld *collisionWorld, btScalar 
         stepForwardAndStrafe(collisionWorld, move);
     }
 
-    if(mWasOnGround)
-    {
-        btTransform start(btMatrix3x3::getIdentity(), mCurrentPosition);
-        btTransform end(btMatrix3x3::getIdentity(), mCurrentPosition - getUpAxisDirections()[mUpAxis]*mStepHeight);
-        std::pair<btScalar,btVector3> res = sweepTrace(collisionWorld, start, end);
-        if(res.first < 1.0f && res.second.angle(getUpAxisDirections()[mUpAxis]) <= mMaxSlopeRadians)
-        {
-            mCurrentPosition = start.getOrigin().lerp(end.getOrigin(), res.first) + getUpAxisDirections()[mUpAxis];
-            mWasJumping = false;
-        }
-        else
-            mWasOnGround = false;
-    }
+    if(!(mGravity < 0.0f && mVerticalVelocity <= 0.0f))
+        mWasOnGround = false;
     else
     {
-        mWasOnGround = checkOnGround(collisionWorld);
         if(mWasOnGround)
         {
-            mCurrentPosition += getUpAxisDirections()[mUpAxis];
-            mWasJumping = false;
+            btTransform start(btMatrix3x3::getIdentity(), mCurrentPosition);
+            btTransform end(btMatrix3x3::getIdentity(), mCurrentPosition - getUpAxisDirections()[mUpAxis]*mStepHeight);
+            std::pair<btScalar,btVector3> res = sweepTrace(collisionWorld, start, end);
+            if(res.first < 1.0f && res.second.angle(getUpAxisDirections()[mUpAxis]) <= mMaxSlopeRadians)
+            {
+                mCurrentPosition = start.getOrigin().lerp(end.getOrigin(), res.first) + getUpAxisDirections()[mUpAxis];
+                mWasJumping = false;
+            }
+            else
+                mWasOnGround = false;
+        }
+        else
+        {
+            mWasOnGround = checkOnGround(collisionWorld);
+            if(mWasOnGround)
+            {
+                mCurrentPosition += getUpAxisDirections()[mUpAxis];
+                mWasJumping = false;
+            }
         }
     }
     if(!mWasOnGround)
