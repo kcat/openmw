@@ -9,12 +9,13 @@
 #include "object.hpp"
 
 class btCylinderShape;
+class btPairCachingGhostObject;
 class btActionInterface;
 
 
 namespace MWPhysics
 {
-    class CharacterAction;
+    class CharacterController;
 
     class Actor : public ObjectInfo
     {
@@ -23,17 +24,18 @@ namespace MWPhysics
         NifBullet::BulletShapePtr mShape;
         btTransform mBBoxTransform;
         btCylinderShape *mCollisionShape;
-        btCollisionObject *mCollisionObject;
+        btPairCachingGhostObject *mCollisionObject;
 
-        CharacterAction *mActionIface;
+        CharacterController *mActionIface;
 
     public:
         Actor(const MWWorld::Ptr &ptr, const NifBullet::BulletShapePtr &shape, PhysicsSystem *phys);
         virtual ~Actor();
 
-        btCollisionObject *getCollisionObject() const
+        btPairCachingGhostObject *getCollisionObject() const
         { return mCollisionObject; }
-        btActionInterface *getActionInterface() const;
+        CharacterController *getActionInterface() const
+        { return mActionIface; }
 
         void resetCollisionObject();
 

@@ -6,6 +6,7 @@
 
 #include <btBulletDynamicsCommon.h>
 #include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
+#include <BulletCollision/CollisionDispatch/btGhostObject.h>
 
 #include <components/nifbullet/bulletshape.hpp>
 
@@ -17,6 +18,7 @@
 #include "debugdraw.hpp"
 #include "object.hpp"
 #include "actor.hpp"
+#include "charactercontroller.hpp"
 
 
 namespace
@@ -115,12 +117,14 @@ namespace MWPhysics
         mDispatcher = new btCollisionDispatcher(mCollisionConfiguration);
 
         mSolver = new btSequentialImpulseConstraintSolver();
-        mPairCache = new btSortedOverlappingPairCache();
-        mBroadphase = new btDbvtBroadphase(mPairCache);
+        mGhostPairCallback = new btGhostPairCallback();
+        mBroadphase = new btDbvtBroadphase();
         mDynamicsWorld = new btDiscreteDynamicsWorld(mDispatcher, mBroadphase, mSolver, mCollisionConfiguration);
         mDynamicsWorld->setGravity(btVector3(0.0f, 0.0f, -627.2f));
 
         mDebugDraw = new DebugDraw(sceneMgr, mDynamicsWorld);
+
+        mBroadphase->getOverlappingPairCache()->setInternalGhostPairCallback(mGhostPairCallback);
     }
 
     PhysicsSystem::~PhysicsSystem()
@@ -129,7 +133,7 @@ namespace MWPhysics
         delete mDebugDraw;
         delete mDynamicsWorld;
         delete mBroadphase;
-        delete mPairCache;
+        delete mGhostPairCallback;
         delete mSolver;
         delete mDispatcher;
         delete mCollisionConfiguration;
@@ -151,7 +155,9 @@ namespace MWPhysics
         Object *obj = new Object(ptr, shape, this);
         mObjects.insert(std::make_pair(ptr.getRefData().getHandle(), obj));
 
-        mDynamicsWorld->addCollisionObject(obj->getCollisionObject());
+        mDynamicsWorld->addCollisionObject(obj->getCollisionObject(),
+                                           btBroadphaseProxy::StaticFilter,
+                                           btBroadphaseProxy::AllFilter ^ btBroadphaseProxy::StaticFilter);
     }
 
     void PhysicsSystem::addActor(const MWWorld::Ptr &ptr)
@@ -239,7 +245,9 @@ namespace MWPhysics
             Object *object = obj->second;
             mDynamicsWorld->removeCollisionObject(object->getCollisionObject());
             object->resetCollisionObject();
-            mDynamicsWorld->addCollisionObject(object->getCollisionObject());
+            mDynamicsWorld->addCollisionObject(object->getCollisionObject(),
+                                               btBroadphaseProxy::StaticFilter,
+                                               btBroadphaseProxy::AllFilter ^ btBroadphaseProxy::StaticFilter);
             return;
         }
 
@@ -250,7 +258,9 @@ namespace MWPhysics
             mDynamicsWorld->removeAction(actor->getActionInterface());
             mDynamicsWorld->removeCollisionObject(actor->getCollisionObject());
             actor->resetCollisionObject();
-            mDynamicsWorld->addCollisionObject(actor->getCollisionObject());
+            mDynamicsWorld->addCollisionObject(actor->getCollisionObject(),
+                                               btBroadphaseProxy::CharacterFilter,
+                                               btBroadphaseProxy::AllFilter);
             mDynamicsWorld->addAction(actor->getActionInterface());
             return;
         }
@@ -263,7 +273,9 @@ namespace MWPhysics
         Heightmap *heightmap = new Heightmap(x, y, heights, yoffset, triSize, sqrtVerts);
         mHeightmaps[std::make_pair(x,y)] = heightmap;
 
-        mDynamicsWorld->addCollisionObject(heightmap->getCollisionObject());
+        mDynamicsWorld->addCollisionObject(heightmap->getCollisionObject(),
+                                           btBroadphaseProxy::StaticFilter,
+                                           btBroadphaseProxy::AllFilter ^ btBroadphaseProxy::StaticFilter);
     }
 
     void PhysicsSystem::removeHeightField(int x, int y)
@@ -350,7 +362,7 @@ namespace MWPhysics
         {
             const float *rot = ptr.getRefData().getPosition().rot;
             Ogre::Matrix3 mat3;
-            if(1/*isflying || isswimming*/)
+            if(0/*isflying || isswimming*/)
                 mat3.FromEulerAnglesZYX(Ogre::Radian(-rot[2]), Ogre::Radian(-rot[1]), Ogre::Radian(rot[0]));
             else
                 mat3.FromAngleAxis(Ogre::Vector3::UNIT_Z, Ogre::Radian(-rot[2]));
@@ -368,7 +380,7 @@ namespace MWPhysics
         mTimeAccum += dt;
         if(mTimeAccum >= 1.0f/60.0f)
         {
-            mDynamicsWorld->stepSimulation(mTimeAccum, 4);
+            mDynamicsWorld->stepSimulation(mTimeAccum, 4, btScalar(1.0f/30.0f));
             mTimeAccum = 0.0f;
         }
 

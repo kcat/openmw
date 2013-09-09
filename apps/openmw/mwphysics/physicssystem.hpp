@@ -17,6 +17,7 @@ class btTransform;
 
 class btDefaultCollisionConfiguration;
 class btCollisionDispatcher;
+class btOverlappingPairCallback;
 class btOverlappingPairCache;
 class btBroadphaseInterface;
 class btSequentialImpulseConstraintSolver;
@@ -50,7 +51,7 @@ namespace MWPhysics
         btDefaultCollisionConfiguration *mCollisionConfiguration;
         btCollisionDispatcher *mDispatcher;
 
-        btOverlappingPairCache *mPairCache;
+        btOverlappingPairCallback *mGhostPairCallback;
         btBroadphaseInterface* mBroadphase;
         btSequentialImpulseConstraintSolver *mSolver;
         btDiscreteDynamicsWorld *mDynamicsWorld;
