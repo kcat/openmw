@@ -152,6 +152,19 @@ void Actors::update (float duration)
     // Nothing to do
 }
 
+
+void Actors::fillIntersectingActors(const Ogre::Ray &ray, float queryDistance, std::vector<std::pair<float,Animation*> > &list)
+{
+    PtrAnimationMap::const_iterator iter = mAllActors.begin();
+    for(;iter != mAllActors.end();iter++)
+    {
+        std::pair<bool,Ogre::Real> res = ray.intersects(iter->second->getWorldBounds());
+        if(res.first && res.second <= queryDistance)
+            list.push_back(std::make_pair(res.second, iter->second));
+    }
+}
+
+
 Animation* Actors::getAnimation(const MWWorld::Ptr &ptr)
 {
     PtrAnimationMap::const_iterator iter = mAllActors.find(ptr);

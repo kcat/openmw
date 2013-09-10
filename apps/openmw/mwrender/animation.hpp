@@ -173,6 +173,9 @@ public:
     Animation(const MWWorld::Ptr &ptr, Ogre::SceneNode *node);
     virtual ~Animation();
 
+    const MWWorld::Ptr &getPtr() const
+    { return mPtr; }
+
     void updatePtr(const MWWorld::Ptr &ptr);
 
     bool hasAnimation(const std::string &anim);

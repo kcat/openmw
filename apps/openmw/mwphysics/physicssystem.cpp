@@ -309,24 +309,6 @@ namespace MWPhysics
     }
 
 
-    std::pair<float,MWWorld::Ptr> PhysicsSystem::getFacedHandle(const MWWorld::Ptr &filter, const Ogre::Ray &ray, float queryDistance) const
-    {
-        const Ogre::Vector3 &origin_ = ray.getOrigin();
-        const Ogre::Vector3 dest_ = ray.getPoint(queryDistance);
-
-        btVector3 from(origin_.x, origin_.y, origin_.z);
-        btVector3 to(dest_.x, dest_.y, dest_.z);
-        FilteredRayResultCallback callback(filter);
-        mDynamicsWorld->rayTest(from, to, callback);
-
-        if(!(callback.m_closestHitFraction < 1.0f))
-            return std::make_pair(queryDistance,MWWorld::Ptr());
-        const ObjectInfo *info = static_cast<const ObjectInfo*>(callback.m_collisionObject->getUserPointer());
-        return std::make_pair(callback.m_closestHitFraction*queryDistance, info->getPtr());
-    }
-
-
-
     bool PhysicsSystem::getObjectAABB(const MWWorld::Ptr &ptr, Ogre::Vector3 &min, Ogre::Vector3 &max)
     {
         return false;

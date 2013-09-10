@@ -158,6 +158,8 @@ public:
     bool occlusionQuerySupported() { return mOcclusionQuery->supported(); }
     OcclusionQuery* getOcclusionQuery() { return mOcclusionQuery; }
 
+    std::pair<float,MWWorld::Ptr> getFacedHandle(const Ogre::Ray &ray, float queryDistance);
+
     float getTerrainHeightAt (Ogre::Vector3 worldPos);
 
     Shadows* getShadows();
@@ -246,6 +248,8 @@ private:
     MWRender::Actors mActors;
 
     MWRender::NpcAnimation *mPlayerAnimation;
+
+    std::vector<std::pair<float,Animation*> > mFacedHandles;
 
     // 0 normal, 1 more bright, 2 max
     int mAmbientMode;

@@ -396,6 +396,24 @@ void RenderingManager::postRenderTargetUpdate(const RenderTargetEvent &evt)
     mOcclusionQuery->setActive(false);
 }
 
+std::pair<float,MWWorld::Ptr> RenderingManager::getFacedHandle(const Ogre::Ray &ray, float queryDistance)
+{
+    std::pair<float,MWWorld::Ptr> ret = std::make_pair(std::numeric_limits<float>::max(), MWWorld::Ptr());
+
+    mObjects.fillIntersectingObjects(ray, queryDistance, mFacedHandles);
+    mActors.fillIntersectingActors(ray, queryDistance, mFacedHandles);
+    std::vector<std::pair<float,Animation*> >::iterator iter = mFacedHandles.begin();
+    for(;iter != mFacedHandles.end();iter++)
+    {
+        if(iter->first < ret.first)
+            ret = std::make_pair(iter->first, iter->second->getPtr());
+    }
+    mFacedHandles.clear();
+
+    return ret;
+}
+
+
 void RenderingManager::waterAdded (MWWorld::Ptr::CellStore *store)
 {
     const MWWorld::Store<ESM::Land> &lands =

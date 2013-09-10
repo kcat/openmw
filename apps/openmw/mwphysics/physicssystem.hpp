@@ -89,8 +89,6 @@ namespace MWPhysics
 
             bool toggleCollisionMode();
 
-            std::pair<float,MWWorld::Ptr> getFacedHandle(const MWWorld::Ptr &filter, const Ogre::Ray &ray, float queryDistance) const;
-
             /// get handles this object collides with
             std::vector<std::string> getCollisions(const MWWorld::Ptr &ptr);
 

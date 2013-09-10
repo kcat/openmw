@@ -49,6 +49,8 @@ namespace MWRender
 
         void update (float duration);
 
+        void fillIntersectingActors(const Ogre::Ray &ray, float queryDistance, std::vector<std::pair<float,Animation*> > &list);
+
         /// Updates containing cell for object rendering data
         void updateObjectCell(const MWWorld::Ptr &old, const MWWorld::Ptr &cur);
 

@@ -14,6 +14,7 @@ namespace MWWorld
 
 namespace MWRender{
 
+class Animation;
 class ObjectAnimation;
 
 class Objects{
@@ -46,6 +47,8 @@ public:
 
     void update (const float dt);
     ///< per-frame update
+
+    void fillIntersectingObjects(const Ogre::Ray &ray, float queryDistance, std::vector<std::pair<float,Animation*> > &list);
 
     Ogre::AxisAlignedBox getDimensions(MWWorld::CellStore*);
     ///< get a bounding box that encloses all objects in the specified cell

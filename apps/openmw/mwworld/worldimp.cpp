@@ -1271,11 +1271,10 @@ namespace MWWorld
         updateFacedHandle ();
     }
 
-    void World::updateFacedHandle ()
+    void World::updateFacedHandle()
     {
         // send new query
         // figure out which object we want to test against
-        MWWorld::Ptr player = getPlayer().getPlayer();
         std::pair<float,Ptr> result;
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
@@ -1283,14 +1282,15 @@ namespace MWWorld
             MWBase::Environment::get().getWindowManager()->getMousePosition(x, y);
             Ogre::Ray ray = mRendering->getCamera()->getCameraToViewportRay(x, y);
             if(!MWBase::Environment::get().getWindowManager()->isConsoleMode())
-                result = mPhysics->getFacedHandle(player, ray, getMaxActivationDistance());
+                result = mRendering->getFacedHandle(ray, getMaxActivationDistance());
             else
-                result = mPhysics->getFacedHandle(player, ray, getMaxActivationDistance()*50.0f);
+                result = mRendering->getFacedHandle(ray, getMaxActivationDistance()*50.0f);
         }
         else
         {
             Ogre::Ray ray = mRendering->getCamera()->getCameraToViewportRay(0.5f, 0.5f);
-            result = mPhysics->getFacedHandle(player, ray, getMaxActivationDistance());
+            ray.setOrigin(mRendering->getCamera()->getParentNode()->_getDerivedPosition());
+            result = mRendering->getFacedHandle(ray, getMaxActivationDistance());
         }
 
         mFacedDistance = result.first;
