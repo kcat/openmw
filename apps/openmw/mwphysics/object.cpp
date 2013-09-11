@@ -25,12 +25,7 @@ Object::Object(const MWWorld::Ptr &ptr, const NifBullet::BulletShapePtr &shape, 
                                             mat3[2][0], mat3[2][1], mat3[2][2]),
                                 btVector3(pos.pos[0], pos.pos[1], pos.pos[2]));
 
-    const Ogre::Vector3 &scale = mPtr.getRefData().getBaseNode()->getScale();
-    btRigidBody::btRigidBodyConstructionInfo cinf(0.0f, this, shape->getScaledCollisionShape(scale.x));
-    mCollisionObject = new btRigidBody(cinf);
-
-    // Explicitly downcast to ensure the user pointer can be directly casted back to ObjectInfo.
-    mCollisionObject->setUserPointer(static_cast<ObjectInfo*>(this));
+    resetCollisionObject();
 }
 
 Object::~Object()
@@ -46,6 +41,7 @@ void Object::resetCollisionObject()
     btRigidBody::btRigidBodyConstructionInfo cinf(0.0f, this, mShape->getScaledCollisionShape(scale.x));
     mCollisionObject = new btRigidBody(cinf);
 
+    // Explicitly downcast to ensure the user pointer can be directly casted back to ObjectInfo.
     mCollisionObject->setUserPointer(static_cast<ObjectInfo*>(this));
 }
 

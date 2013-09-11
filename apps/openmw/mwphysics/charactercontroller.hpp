@@ -71,9 +71,6 @@ private:
     bool stepMove(btCollisionWorld *collisionWorld);
 
 public:
-    btPairCachingGhostObject *getGhostObject() const
-    { return mGhostObject; }
-
     CharacterController(btPairCachingGhostObject *ghostObject, btConvexShape *convexShape,
                         btScalar stepHeight, int upAxis=1);
 
@@ -103,6 +100,9 @@ public:
     void setWalkDirection(const btScalar x, const btScalar y, const btScalar z);
     btVector3 getWalkDirection() const;
     btVector3 getPosition() const;
+
+    btPairCachingGhostObject *getGhostObject() const
+    { return mGhostObject; }
 
     void debugDraw(btIDebugDraw *debugDrawer)
     {

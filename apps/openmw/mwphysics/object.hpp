@@ -9,7 +9,7 @@
 
 #include "physicssystem.hpp"
 
-class btCollisionObject;
+class btRigidBody;
 class btTransform;
 
 namespace MWPhysics
@@ -37,7 +37,7 @@ namespace MWPhysics
         PhysicsSystem *mPhysics;
 
         NifBullet::BulletShapePtr mShape;
-        btCollisionObject *mCollisionObject;
+        btRigidBody *mCollisionObject;
 
         btTransform mCurrentTrans;
 
@@ -49,7 +49,7 @@ namespace MWPhysics
         Object(const MWWorld::Ptr &ptr, const NifBullet::BulletShapePtr &shape, PhysicsSystem *phys);
         virtual ~Object();
 
-        btCollisionObject *getCollisionObject() const
+        btRigidBody *getCollisionObject() const
         { return mCollisionObject; }
 
         void resetCollisionObject();
