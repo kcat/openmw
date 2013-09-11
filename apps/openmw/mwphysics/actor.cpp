@@ -20,9 +20,6 @@ Actor::Actor(const MWWorld::Ptr &ptr, const NifBullet::BulletShapePtr &shape, Ph
   , mCollisionObject(0)
   , mActionIface(0)
 {
-    // Use a cylinder shape to help avoid actors getting caught by bounding box edges
-    mCollisionShape = new btCylinderShapeZ(mShape->getBBoxRadius());
-
     resetCollisionObject();
 }
 
@@ -37,9 +34,11 @@ void Actor::resetCollisionObject()
 {
     delete mActionIface;
     delete mCollisionObject;
+    delete mCollisionShape;
 
     const Ogre::Vector3 &scale = mPtr.getRefData().getBaseNode()->getScale();
-    mCollisionShape->setLocalScaling(btVector3(scale.x, scale.x, scale.x));
+    // Use a cylinder shape to help avoid actors getting caught by bounding box edges
+    mCollisionShape = new btCylinderShapeZ(mShape->getBBoxRadius() * scale.x);
     mBBoxTransform.setOrigin(mShape->getBBoxTransform().getOrigin() * scale.x);
     mBBoxTransform.setBasis(mShape->getBBoxTransform().getBasis());
 
