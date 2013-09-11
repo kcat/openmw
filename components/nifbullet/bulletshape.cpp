@@ -89,14 +89,13 @@ btCollisionShape* BulletShape::getScaledCollisionShape(float scale)
     if(coliter != mScaledCollisionShapes.end())
         return coliter->second;
 
-    btCollisionShape *newShape = duplicateCollisionShape(mCollisionShape);
-    newShape->setLocalScaling(btVector3(scale, scale, scale));
+    btCollisionShape *newShape = duplicateCollisionShape(mCollisionShape, scale);
     mScaledCollisionShapes.insert(std::make_pair(scaleidx, newShape));
     return newShape;
 }
 
 
-btCollisionShape *BulletShape::duplicateCollisionShape(btCollisionShape *shape)
+btCollisionShape *BulletShape::duplicateCollisionShape(btCollisionShape *shape, btScalar scale)
 {
     if(shape->isCompound())
     {
@@ -106,8 +105,10 @@ btCollisionShape *BulletShape::duplicateCollisionShape(btCollisionShape *shape)
         int numShapes = comp->getNumChildShapes();
         for(int i = 0;i < numShapes;i++)
         {
-            btCollisionShape *child = duplicateCollisionShape(comp->getChildShape(i));
-            newShape->addChildShape(comp->getChildTransform(i), child);
+            btCollisionShape *child = duplicateCollisionShape(comp->getChildShape(i), scale);
+            btTransform trans = comp->getChildTransform(i);
+            trans.setOrigin(trans.getOrigin() * scale);
+            newShape->addChildShape(trans, child);
         }
 
         return newShape;
@@ -116,7 +117,7 @@ btCollisionShape *BulletShape::duplicateCollisionShape(btCollisionShape *shape)
     if(btBvhTriangleMeshShape *trishape = dynamic_cast<btBvhTriangleMeshShape*>(shape))
     {
         btScaledBvhTriangleMeshShape *newShape;
-        newShape = new btScaledBvhTriangleMeshShape(trishape, btVector3(1.0f, 1.0f, 1.0f));
+        newShape = new btScaledBvhTriangleMeshShape(trishape, btVector3(scale, scale, scale));
         return newShape;
     }
 
