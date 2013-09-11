@@ -15,6 +15,9 @@ namespace MWRender
     public:
         CreatureAnimation(const MWWorld::Ptr& ptr);
         virtual ~CreatureAnimation();
+
+        virtual float getRealIntersection(const Ogre::Ray&, float origdist)
+        { return origdist; }
     };
 }
 

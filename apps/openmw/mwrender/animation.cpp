@@ -957,6 +957,154 @@ Ogre::AxisAlignedBox Animation::getWorldBounds()
 }
 
 
+void Animation::getMeshInformation(const Ogre::Mesh*const mesh,
+                                   std::vector<Ogre::Vector3> &vertices, std::vector<int> &indices,
+                                   const Ogre::Matrix4 &trans)
+{
+    bool added_shared = false;
+
+    // Calculate how many vertices and indices we're going to need
+    size_t vcount=0, icount=0;
+    for(unsigned short i = 0;i < mesh->getNumSubMeshes();++i)
+    {
+        Ogre::SubMesh *submesh = mesh->getSubMesh(i);
+        if(!submesh->useSharedVertices)
+            vcount += submesh->vertexData->vertexCount;
+        else
+        {
+            // We only need to add the shared vertices once
+            if(!added_shared)
+            {
+                vcount += mesh->sharedVertexData->vertexCount;
+                added_shared = true;
+            }
+        }
+        // Add the indices
+        icount += submesh->indexData->indexCount;
+    }
+
+    if(vcount == 0 || icount == 0)
+        return;
+
+    size_t current_offset = vertices.size();
+    size_t shared_offset = current_offset;
+    size_t index_offset = indices.size();
+
+    // Allocate space for the vertices and indices
+    vertices.resize(vertices.size() + vcount);
+    indices.resize(indices.size() + icount);
+
+    added_shared = false;
+
+    // Run through the submeshes again, adding the data into the arrays
+    for(unsigned short i = 0;i < mesh->getNumSubMeshes();++i)
+    {
+        Ogre::SubMesh *submesh = mesh->getSubMesh(i);
+        Ogre::VertexData *vdata = submesh->useSharedVertices ? mesh->sharedVertexData : submesh->vertexData;
+
+        size_t next_offset = current_offset;
+        if(!submesh->useSharedVertices || (submesh->useSharedVertices && !added_shared))
+        {
+            if(submesh->useSharedVertices)
+            {
+                added_shared = true;
+                shared_offset = current_offset;
+            }
+
+            const Ogre::VertexElement *posElem = vdata->vertexDeclaration->findElementBySemantic(Ogre::VES_POSITION);
+            Ogre::HardwareVertexBufferSharedPtr vbuf = vdata->vertexBufferBinding->getBuffer(posElem->getSource());
+
+            char *vtxbase = static_cast<char*>(vbuf->lock(Ogre::HardwareBuffer::HBL_READ_ONLY));
+            size_t vtxstride = vbuf->getVertexSize();
+
+            // There is no baseVertexPointerToElement() which takes an Ogre::Real or a double as
+            // the second argument. So make it float, to avoid trouble when Ogre::Real will be
+            // compiled/typedefed as double:
+            for(size_t j = 0;j < vdata->vertexCount;++j, vtxbase+=vtxstride)
+            {
+                float *vtxdata = 0;
+                posElem->baseVertexPointerToElement(vtxbase, &vtxdata);
+                Ogre::Vector4 pt(vtxdata[0], vtxdata[1], vtxdata[2], 1.0f);
+                vertices[current_offset + j] = Ogre::Vector3((trans * pt).ptr());
+            }
+
+            vbuf->unlock();
+            next_offset += vdata->vertexCount;
+        }
+
+        Ogre::IndexData *idata = submesh->indexData;
+        size_t numTris = idata->indexCount / 3;
+        Ogre::HardwareIndexBufferSharedPtr ibuf = idata->indexBuffer;
+
+        size_t offset = (submesh->useSharedVertices) ? shared_offset : current_offset;
+        bool use32bitindexes = (ibuf->getType() == Ogre::HardwareIndexBuffer::IT_32BIT);
+        if(use32bitindexes)
+        {
+            Ogre::uint32 *idx = static_cast<Ogre::uint32*>(ibuf->lock(Ogre::HardwareBuffer::HBL_READ_ONLY));
+            for(size_t k = 0;k < numTris*3;++k)
+                indices[index_offset++] = idx[k] + offset;
+            ibuf->unlock();
+        }
+        else
+        {
+            Ogre::uint16 *idx = static_cast<Ogre::uint16*>(ibuf->lock(Ogre::HardwareBuffer::HBL_READ_ONLY));
+            for(size_t k = 0;k < numTris*3;++k)
+                indices[index_offset++] = idx[k] + offset;
+            ibuf->unlock();
+        }
+
+        current_offset = next_offset;
+    }
+}
+
+
+class FillVerticesIndices {
+    std::vector<Ogre::Vector3> *mVertices;
+    std::vector<int> *mIndices;
+
+public:
+    FillVerticesIndices(std::vector<Ogre::Vector3> *vertices, std::vector<int> *indices,
+                        Ogre::SceneNode *node)
+      : mVertices(vertices), mIndices(indices)
+    { }
+
+    void operator()(const Ogre::Entity *ent) const
+    {
+        if(!ent->isVisible())
+            return;
+        const Ogre::Matrix4 &trans = ent->_getParentNodeFullTransform();
+        Animation::getMeshInformation(ent->getMesh().getPointer(), *mVertices, *mIndices, trans);
+    }
+};
+
+float Animation::getRealIntersection(const Ogre::Ray &ray, float origdist)
+{
+    // Can improve this by only refilling the cache if the entity moved/animated
+    mMeshVertexCache.clear();
+    mMeshIndexCache.clear();
+    std::for_each(mObjectRoot.mEntities.begin(), mObjectRoot.mEntities.end(),
+                  FillVerticesIndices(&mMeshVertexCache, &mMeshIndexCache, mInsert));
+    if(mMeshVertexCache.empty() || mMeshIndexCache.empty())
+        return origdist;
+
+    float newdist = std::numeric_limits<float>::max();
+    for(size_t i = 0;i < mMeshIndexCache.size();i += 3)
+    {
+        // check for a hit against this triangle
+        std::pair<bool,Ogre::Real> hit = Ogre::Math::intersects(ray,
+            mMeshVertexCache[mMeshIndexCache[i+0]],
+            mMeshVertexCache[mMeshIndexCache[i+1]],
+            mMeshVertexCache[mMeshIndexCache[i+2]],
+            true, false
+        );
+        if(hit.first && hit.second < newdist)
+            newdist = hit.second;
+    }
+
+    return newdist;
+}
+
+
 Ogre::TagPoint *Animation::attachObjectToBone(const Ogre::String &bonename, Ogre::MovableObject *obj)
 {
     Ogre::TagPoint *tag = NULL;

@@ -114,6 +114,9 @@ protected:
 
     ObjectAttachMap mAttachedObjects;
 
+    std::vector<Ogre::Vector3> mMeshVertexCache;
+    std::vector<int> mMeshIndexCache;
+
     /* Sets the appropriate animations on the bone groups based on priority.
      */
     void resetActiveGroups();
@@ -233,6 +236,10 @@ public:
 
     Ogre::AxisAlignedBox getWorldBounds();
 
+    /// Gets a more precise intersection point for \a ray, on the polygonal level if possible. If
+    /// it can't check per-polygon, \a origdist is returned.
+    virtual float getRealIntersection(const Ogre::Ray &ray, float origdist);
+
     void setCamera(Camera *cam)
     { mCamera = cam; }
 
@@ -243,6 +250,12 @@ public:
     // valid until the next setObjectRoot call.
     Ogre::TagPoint *attachObjectToBone(const Ogre::String &bonename, Ogre::MovableObject *obj);
     void detachObjectFromBone(Ogre::MovableObject *obj);
+
+    // For internal use only
+    static void getMeshInformation(const Ogre::Mesh* const mesh,
+                                   std::vector<Ogre::Vector3> &vertices,
+                                   std::vector<int> &indices,
+                                   const Ogre::Matrix4 &trans);
 };
 
 class ObjectAnimation : public Animation {

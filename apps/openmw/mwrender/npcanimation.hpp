@@ -85,6 +85,9 @@ public:
 
     virtual void showWeapons(bool showWeapon);
 
+    virtual float getRealIntersection(const Ogre::Ray&, float origdist)
+    { return origdist; }
+
     void setViewMode(ViewMode viewMode);
 
     void updateParts(bool forceupdate = false);

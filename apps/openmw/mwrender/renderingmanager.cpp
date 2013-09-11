@@ -400,13 +400,18 @@ std::pair<float,MWWorld::Ptr> RenderingManager::getFacedHandle(const Ogre::Ray &
 {
     std::pair<float,MWWorld::Ptr> ret = std::make_pair(std::numeric_limits<float>::max(), MWWorld::Ptr());
 
-    mObjects.fillIntersectingObjects(ray, queryDistance, mFacedHandles);
+    // Actors first, so they'll help cull objects that need more detailed per-polygon checking
     mActors.fillIntersectingActors(ray, queryDistance, mFacedHandles);
+    mObjects.fillIntersectingObjects(ray, queryDistance, mFacedHandles);
     std::vector<std::pair<float,Animation*> >::iterator iter = mFacedHandles.begin();
     for(;iter != mFacedHandles.end();iter++)
     {
         if(iter->first < ret.first)
-            ret = std::make_pair(iter->first, iter->second->getPtr());
+        {
+            float dist = iter->second->getRealIntersection(ray, iter->first);
+            if(dist < ret.first && dist <= queryDistance)
+                ret = std::make_pair(dist, iter->second->getPtr());
+        }
     }
     mFacedHandles.clear();
 
