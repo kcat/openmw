@@ -142,10 +142,13 @@ namespace MWPhysics
 
     void PhysicsSystem::addObject(const MWWorld::Ptr &ptr, bool placeable)
     {
-        NifBullet::BulletShapeManager &shapeMgr = NifBullet::BulletShapeManager::getSingleton();
         const std::string name = Misc::StringUtils::lowerCase(ptr.getClass().getModel(ptr));
-        NifBullet::BulletShapePtr shape = shapeMgr.load(name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+        // Don't add marker objects
+        if(name.find("marker") != std::string::npos)
+            return;
 
+        NifBullet::BulletShapeManager &shapeMgr = NifBullet::BulletShapeManager::getSingleton();
+        NifBullet::BulletShapePtr shape = shapeMgr.load(name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
         if(!shape->getCollisionShape())
             return;
 
