@@ -62,7 +62,7 @@ namespace MWPhysics
         btCollisionObject *mCollisionObject;
 
     public:
-        Heightmap(int x, int y, const float *heights, float yoffset, float triSize, int sqrtVerts)
+        Heightmap(int x, int y, const float *heights, float triSize, int sqrtVerts)
           : ObjectInfo(MWWorld::Ptr())
           , mShape(0)
           , mCollisionObject(0)
@@ -86,8 +86,8 @@ namespace MWPhysics
             mShape->setLocalScaling(btVector3(triSize, triSize, 1));
 
             btTransform transform(btQuaternion::getIdentity(),
-                                  btVector3((x+0.5f) * triSize * (sqrtVerts-1.0f),
-                                            (y+0.5f) * triSize * (sqrtVerts-1.0f),
+                                  btVector3((x+0.5f) * triSize * (sqrtVerts-1),
+                                            (y+0.5f) * triSize * (sqrtVerts-1),
                                             (maxh+minh)*0.5f));
 
             mCollisionObject = new btCollisionObject;
@@ -270,10 +270,9 @@ namespace MWPhysics
     }
 
 
-    void PhysicsSystem::addHeightField(int x, int y, const float *heights, float yoffset,
-                                       float triSize, int sqrtVerts)
+    void PhysicsSystem::addHeightField(int x, int y, const float *heights, float triSize, int sqrtVerts)
     {
-        Heightmap *heightmap = new Heightmap(x, y, heights, yoffset, triSize, sqrtVerts);
+        Heightmap *heightmap = new Heightmap(x, y, heights, triSize, sqrtVerts);
         mHeightmaps[std::make_pair(x,y)] = heightmap;
 
         mDynamicsWorld->addCollisionObject(heightmap->getCollisionObject(),

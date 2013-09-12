@@ -82,8 +82,7 @@ namespace MWPhysics
 
             void scaleObject(const MWWorld::Ptr& ptr);
 
-            void addHeightField(int x, int y, const float *heights, float yoffset,
-                                float triSize, int sqrtVerts);
+            void addHeightField(int x, int y, const float *heights, float triSize, int sqrtVerts);
 
             void removeHeightField(int x, int y);
 

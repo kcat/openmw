@@ -143,7 +143,6 @@ namespace MWWorld
                         cell->mCell->getGridX(),
                         cell->mCell->getGridY(),
                         land->mLandData->mHeights,
-                        0,
                         (float)worldsize / (float)(verts-1),
                         verts
                     );
