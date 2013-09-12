@@ -306,7 +306,16 @@ namespace MWPhysics
         mDynamicsWorld->addCollisionObject(actor->getCollisionObject(),
                                            btBroadphaseProxy::CharacterFilter,
                                            (on ? btBroadphaseProxy::AllFilter : 0));
-        actor->getActionInterface()->setGravity(on/*&& !flying && !swimming*/ ? -627.2f : 0.0f);
+        if(on/*&& !flying && !swimming*/)
+        {
+            actor->getActionInterface()->setGravity(-627.2f);
+            actor->getActionInterface()->setFallSpeed(-62720.0f);
+        }
+        else
+        {
+            actor->getActionInterface()->setGravity(0.0f);
+            actor->getActionInterface()->setFallSpeed(0.0f);
+        }
 
         return on;
     }
