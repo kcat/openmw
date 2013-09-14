@@ -292,6 +292,19 @@ namespace MWPhysics
     }
 
 
+    bool PhysicsSystem::isOnGround(const MWWorld::Ptr &ptr) const
+    {
+        ActorMap::const_iterator aiter(mActors.find(ptr.getRefData().getHandle()));
+        if(aiter != mActors.end())
+        {
+            Actor *actor = aiter->second;
+            return actor->getActionInterface()->onGround();
+        }
+
+        return false;
+    }
+
+
     bool PhysicsSystem::toggleCollisionMode()
     {
         ActorMap::iterator aiter = mActors.find("player");

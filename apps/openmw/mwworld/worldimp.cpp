@@ -1563,7 +1563,7 @@ namespace MWWorld
 
     bool World::isOnGround(const MWWorld::Ptr &ptr) const
     {
-        return true;
+        return mPhysics->isOnGround(ptr);
     }
 
     bool World::vanityRotateCamera(float * rot)

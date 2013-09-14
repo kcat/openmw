@@ -86,6 +86,8 @@ namespace MWPhysics
 
             void removeHeightField(int x, int y);
 
+            bool isOnGround(const MWWorld::Ptr &ptr) const;
+
             bool toggleCollisionMode();
 
             /// get handles this object collides with
