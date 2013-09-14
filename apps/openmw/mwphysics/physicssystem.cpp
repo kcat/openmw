@@ -332,6 +332,16 @@ namespace MWPhysics
         return on;
     }
 
+    bool PhysicsSystem::hasCollisionEnabled(const MWWorld::Ptr &ptr) const
+    {
+        ActorMap::const_iterator aiter = mActors.find(ptr.getRefData().getHandle());
+        if(aiter == mActors.end())
+            return false;
+
+        Actor *actor = aiter->second;
+        return !!actor->getCollisionObject()->getBroadphaseHandle()->m_collisionFilterMask;
+    }
+
 
     bool PhysicsSystem::getObjectAABB(const MWWorld::Ptr &ptr, Ogre::Vector3 &min, Ogre::Vector3 &max)
     {

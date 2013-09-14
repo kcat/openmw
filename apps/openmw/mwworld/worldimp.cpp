@@ -1526,11 +1526,10 @@ namespace MWWorld
         if(stats.getMagicEffects().get(MWMechanics::EffectKey(ESM::MagicEffect::Levitate)).mMagnitude > 0)
             return true;
 
-        // TODO: Check if flying creature
-
-        // TODO: Check if collisions are off
-        if(true)
+        if(!mPhysics->hasCollisionEnabled(ptr))
             return true;
+
+        // TODO: Check if flying creature
 
         return false;
     }

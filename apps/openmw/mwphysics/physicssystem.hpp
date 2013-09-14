@@ -90,6 +90,8 @@ namespace MWPhysics
 
             bool toggleCollisionMode();
 
+            bool hasCollisionEnabled(const MWWorld::Ptr &ptr) const;
+
             /// get handles this object collides with
             std::vector<std::string> getCollisions(const MWWorld::Ptr &ptr);
 
