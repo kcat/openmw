@@ -70,6 +70,12 @@ void Actor::setOrigin(const btVector3 &newOrigin)
     mActionIface->warp(newOrigin + mBBoxTransform.getOrigin());
 }
 
+void Actor::jump(float vel)
+{
+    mActionIface->setJumpSpeed(vel);
+    mActionIface->jump();
+}
+
 void Actor::updateVelocity(const Ogre::Vector3 &velocity)
 {
     mActionIface->setWalkDirection(velocity.x, velocity.y, velocity.z);

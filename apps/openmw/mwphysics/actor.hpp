@@ -45,6 +45,8 @@ namespace MWPhysics
         /// Sets the collision object's current position, correcting for the bounding box offset
         void setOrigin(const btVector3 &newOrigin);
 
+        void jump(float vel);
+
         void updateVelocity(const Ogre::Vector3 &velocity);
     };
 }

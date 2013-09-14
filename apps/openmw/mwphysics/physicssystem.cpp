@@ -380,15 +380,23 @@ namespace MWPhysics
         if(aiter != mActors.end())
         {
             Actor *actor = aiter->second;
+            Ogre::Vector3 velocity;
 
             const float *rot = ptr.getRefData().getPosition().rot;
             Ogre::Matrix3 mat3;
             if(0/*isflying || isswimming*/ ||
                !actor->getCollisionObject()->getBroadphaseHandle()->m_collisionFilterMask)
+            {
                 mat3.FromEulerAnglesZYX(Ogre::Radian(-rot[2]), Ogre::Radian(-rot[1]), Ogre::Radian(rot[0]));
+                velocity = mat3 * movement;
+            }
             else
+            {
                 mat3.FromAngleAxis(Ogre::Vector3::UNIT_Z, Ogre::Radian(-rot[2]));
-            Ogre::Vector3 velocity = mat3 * movement;
+                if(movement.z > 0.0f)
+                    actor->jump(movement.z);
+                velocity = mat3 * Ogre::Vector3(movement.x, movement.y, 0.0f);
+            }
 
             actor->updateVelocity(velocity);
         }
