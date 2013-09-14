@@ -43,7 +43,8 @@ opencs_units_noqt (model/tools
 
 
 opencs_units (view/doc
-    viewmanager view operations operation subview startup filedialog
+    viewmanager view operations operation subview startup filedialog newgame filewidget
+    adjusterwidget
     )
 
 
@@ -135,7 +136,7 @@ if(WIN32)
     set(QT_USE_QTMAIN TRUE)
 endif(WIN32)
 
-find_package(Qt4 COMPONENTS QtCore QtGui QtXml QtXmlPatterns REQUIRED)
+find_package(Qt4 COMPONENTS QtCore QtGui QtNetwork QtXml QtXmlPatterns REQUIRED)
 include(${QT_USE_FILE})
 
 qt4_wrap_ui(OPENCS_UI_HDR ${OPENCS_UI})
