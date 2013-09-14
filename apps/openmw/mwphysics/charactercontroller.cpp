@@ -4,6 +4,7 @@
 
 #include <BulletCollision/CollisionShapes/btConvexShape.h>
 
+
 namespace
 {
     class ClosestNotMeRayResultCallback : public btCollisionWorld::ClosestRayResultCallback
@@ -46,6 +47,12 @@ namespace
             if(convexResult.m_hitCollisionObject == mMe)
                 return 1.0f;
 
+            // HACK: Some objects seem to have this erroneously set. Seems collision objects using
+            // a btScaledBvhTriangleMeshShape (at least as part of btCompoundShape) will have this
+            // set to false, even though the provided normal actually is in world space. Because of
+            // this, the following call would try to correct normal using the object's rotation,
+            // causing an incorrect result.
+            normalInWorldSpace = true;
             return btCollisionWorld::ClosestConvexResultCallback::addSingleResult(convexResult, normalInWorldSpace);
         }
     };
@@ -94,7 +101,7 @@ bool CharacterController::checkOnGround(btCollisionWorld *collisionWorld) const
         return false;
 
     btTransform start = mGhostObject->getWorldTransform();
-    btTransform end(start.getBasis(), start.getOrigin() - getUpAxisDirections()[mUpAxis]*2.0f);
+    btTransform end(start.getBasis(), start.getOrigin() - getUpAxisDirections()[mUpAxis]);
 
     std::pair<btScalar,btVector3> res = sweepTrace(collisionWorld, start, end);
     if(res.first < 1.0f && res.second.angle(getUpAxisDirections()[mUpAxis]) <= mMaxSlopeRadians)
@@ -115,7 +122,7 @@ bool CharacterController::stepMove(btCollisionWorld *collisionWorld)
         return false;
     btVector3 raisedPos = start.getOrigin().lerp(end.getOrigin(), res.first);
 
-    // Keep moving
+    // Try to keep moving
     start.setOrigin(raisedPos);
     end.setOrigin(raisedPos + moveDir);
     res = sweepTrace(collisionWorld, start, end);
@@ -270,10 +277,22 @@ void CharacterController::stepForwardAndStrafe(btCollisionWorld *collisionWorld,
 
         if(!callback.hasHit())
         {
+            // Didn't hit anything, reached the target.
             mCurrentPosition = mTargetPosition;
             break;
         }
 
+        // If we moved at all and hit a walkable surface, accept how far we got.
+        if(!(callback.m_closestHitFraction < SIMD_EPSILON) &&
+           callback.m_hitNormalWorld.angle(getUpAxisDirections()[mUpAxis]) <= mMaxSlopeRadians)
+        {
+            mCurrentPosition = mCurrentPosition.lerp(mTargetPosition, callback.m_closestHitFraction);
+            mWasOnGround = (mGravity < 0.0f && mVerticalVelocity <= 0.0f);
+            distance2 = (mCurrentPosition - mTargetPosition).length2();
+            continue;
+        }
+
+        // Otherwise, try to step up onto what we hit.
         if(stepMove(collisionWorld))
         {
             mWasOnGround = (mGravity < 0.0f && mVerticalVelocity <= 0.0f);
@@ -281,6 +300,7 @@ void CharacterController::stepForwardAndStrafe(btCollisionWorld *collisionWorld,
             continue;
         }
 
+        // Otherwise, try to find another point to move to.
         updateTargetPositionBasedOnCollision(callback.m_hitNormalWorld);
 
         btVector3 currentDir = mTargetPosition - mCurrentPosition;
@@ -335,8 +355,8 @@ void CharacterController::playerStep(btCollisionWorld *collisionWorld, btScalar 
 
     if(mVerticalVelocity > 0 && mVerticalVelocity > mJumpSpeed)
         mVerticalVelocity = mJumpSpeed;
-    else if(mVerticalVelocity < 0 && mVerticalVelocity < -btFabs(mFallSpeed))
-        mVerticalVelocity = -btFabs(mFallSpeed);
+    else if(mVerticalVelocity < 0 && mVerticalVelocity < mFallSpeed)
+        mVerticalVelocity = mFallSpeed;
 
     btTransform xform = mGhostObject->getWorldTransform();
     btVector3 inertia = getUpAxisDirections()[mUpAxis] * mVerticalVelocity;
@@ -364,20 +384,20 @@ void CharacterController::playerStep(btCollisionWorld *collisionWorld, btScalar 
             btTransform start(btMatrix3x3::getIdentity(), mCurrentPosition);
             btTransform end(btMatrix3x3::getIdentity(), mCurrentPosition - getUpAxisDirections()[mUpAxis]*mStepHeight);
             std::pair<btScalar,btVector3> res = sweepTrace(collisionWorld, start, end);
-            if(res.first < 1.0f && res.second.angle(getUpAxisDirections()[mUpAxis]) <= mMaxSlopeRadians)
+            mWasOnGround = (res.first < 1.0f && res.second.angle(getUpAxisDirections()[mUpAxis]) <= mMaxSlopeRadians);
+            if(mWasOnGround)
             {
-                mCurrentPosition = start.getOrigin().lerp(end.getOrigin(), res.first) + getUpAxisDirections()[mUpAxis];
+                mCurrentPosition = start.getOrigin().lerp(end.getOrigin(), res.first);
+                mVerticalVelocity = 0.0f;
                 mWasJumping = false;
             }
-            else
-                mWasOnGround = false;
         }
         else
         {
             mWasOnGround = checkOnGround(collisionWorld);
             if(mWasOnGround)
             {
-                mCurrentPosition += getUpAxisDirections()[mUpAxis];
+                mVerticalVelocity = 0.0f;
                 mWasJumping = false;
             }
         }
