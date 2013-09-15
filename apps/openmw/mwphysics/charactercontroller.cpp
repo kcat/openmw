@@ -47,12 +47,6 @@ namespace
             if(convexResult.m_hitCollisionObject == mMe)
                 return 1.0f;
 
-            // HACK: Some objects seem to have this erroneously set. Seems collision objects using
-            // a btScaledBvhTriangleMeshShape (at least as part of btCompoundShape) will have this
-            // set to false, even though the provided normal actually is in world space. Because of
-            // this, the following call would try to correct normal using the object's rotation,
-            // causing an incorrect result.
-            normalInWorldSpace = true;
             return btCollisionWorld::ClosestConvexResultCallback::addSingleResult(convexResult, normalInWorldSpace);
         }
     };
@@ -115,7 +109,7 @@ bool CharacterController::stepMove(btCollisionWorld *collisionWorld)
     btVector3 moveDir = mTargetPosition - mCurrentPosition;
 
     // Step up
-    btTransform start(btMatrix3x3::getIdentity(), mCurrentPosition);
+    btTransform start(btMatrix3x3::getIdentity(), mCurrentPosition + getUpAxisDirections()[mUpAxis]);
     btTransform end(btMatrix3x3::getIdentity(), mCurrentPosition + getUpAxisDirections()[mUpAxis]*mStepHeight);
     std::pair<btScalar,btVector3> res = sweepTrace(collisionWorld, start, end);
     if(res.first < SIMD_EPSILON)
@@ -133,9 +127,9 @@ bool CharacterController::stepMove(btCollisionWorld *collisionWorld)
 
     // Set down
     start.setOrigin(movedPos);
-    end.setOrigin(movedPos - getUpAxisDirections()[mUpAxis]*mStepHeight);
+    end.setOrigin(movedPos - getUpAxisDirections()[mUpAxis]*(mStepHeight+0.1f));
     res = sweepTrace(collisionWorld, start, end);
-    if(res.first >= 1.0f || res.second.angle(getUpAxisDirections()[mUpAxis]) >= mMaxSlopeRadians)
+    if(res.first >= 1.0f || res.second.angle(getUpAxisDirections()[mUpAxis]) > mMaxSlopeRadians)
         return false;
 
     mCurrentPosition = start.getOrigin().lerp(end.getOrigin(), res.first);
