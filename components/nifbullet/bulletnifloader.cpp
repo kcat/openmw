@@ -11,6 +11,51 @@
 namespace NifBullet
 {
 
+class TriangleMesh : public btTriangleIndexVertexArray
+{
+    btAlignedObjectArray<btVector3> mVertices;
+    btAlignedObjectArray<unsigned short> mIndices;
+
+public:
+    TriangleMesh()
+    {
+        btIndexedMesh meshIndex;
+        meshIndex.m_numTriangles = 0;
+        meshIndex.m_numVertices = 0;
+        meshIndex.m_indexType = PHY_SHORT;
+        meshIndex.m_triangleIndexBase = 0;
+        meshIndex.m_triangleIndexStride = 3*sizeof(short);
+        meshIndex.m_vertexBase = 0;
+        meshIndex.m_vertexStride = sizeof(btVector3);
+        m_indexedMeshes.push_back(meshIndex);
+    }
+
+    virtual void preallocateVertices(int) { }
+    virtual void preallocateIndices(int) { }
+
+    void addVertex(const btVector3 &vertex)
+    {
+        mVertices.push_back(vertex);
+    }
+
+    void addTriangleIndices(unsigned short idx1, unsigned short idx2, unsigned short idx3)
+    {
+        mIndices.push_back(idx1);
+        mIndices.push_back(idx2);
+        mIndices.push_back(idx3);
+    }
+
+    void finalise()
+    {
+        m_indexedMeshes[0].m_vertexBase = (unsigned char*)&mVertices[0];
+        m_indexedMeshes[0].m_numVertices = mVertices.size();
+
+        m_indexedMeshes[0].m_triangleIndexBase = (unsigned char*)&mIndices[0];
+        m_indexedMeshes[0].m_numTriangles = mIndices.size()/3;
+    }
+};
+
+
 void BulletShapeLoader::load(const std::string &name, BulletShape *shape)
 {
     Nif::NIFFile::ptr nif = Nif::NIFFile::create(name);
@@ -118,20 +163,17 @@ void BulletShapeLoader::loadTriShape(const Nif::NiTriShape *trishape, BulletShap
     btCollisionShape *curshape = shape->getCollisionShape();
     assert(!curshape || curshape->isCompound());
 
-    btTriangleMesh *mesh = new btTriangleMesh;
+    TriangleMesh *mesh = new TriangleMesh;
     shape->mMeshIfaces.push_back(mesh);
 
-    const Nif::NiTriShapeData *data = trishape->data.getPtr();
-    const Ogre::Vector3 *vertices = &data->vertices[0];
-    const short *triangles = &data->triangles[0];
-    for(size_t i = 0;i < data->triangles.size();i+=3)
-    {
-        Ogre::Vector3 b1 = vertices[triangles[i+0]];
-        Ogre::Vector3 b2 = vertices[triangles[i+1]];
-        Ogre::Vector3 b3 = vertices[triangles[i+2]];
-        mesh->addTriangle(btVector3(b1.x, b1.y, b1.z), btVector3(b2.x, b2.y, b2.z),
-                          btVector3(b3.x, b3.y, b3.z));
-    }
+    const Nif::NiTriShapeDataPtr data = trishape->data;
+    const std::vector<Ogre::Vector3> &vertices = data->vertices;
+    const std::vector<short> &indices = data->triangles;
+    for(size_t i = 0;i < vertices.size();++i)
+        mesh->addVertex(btVector3(vertices[i].x, vertices[i].y, vertices[i].z));
+    for(size_t i = 0;i < indices.size();i+=3)
+        mesh->addTriangleIndices(indices[i], indices[i+1], indices[i+2]);
+    mesh->finalise();
 
     Ogre::Matrix4 transform = trishape->getWorldTransform();
     btTransform bttrans(btMatrix3x3(transform[0][0], transform[0][1], transform[0][2],
