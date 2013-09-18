@@ -781,12 +781,11 @@ namespace MWWorld
                 pos += node->_getDerivedPosition();
         }
 
-        std::pair<std::string,Ogre::Vector3> result = mPhysics->getHitContact(ptr.getRefData().getHandle(),
-                                                                              pos, rot, distance);
-        if(result.first.empty())
+        std::pair<Ptr,Ogre::Vector3> result = mPhysics->getHitContact(ptr.getRefData().getHandle(),
+                                                                      pos, rot, distance);
+        if(result.first.isEmpty())
             return std::make_pair(MWWorld::Ptr(), Ogre::Vector3(0.0f));
-
-        return std::make_pair(searchPtrViaHandle(result.first), result.second);
+        return result;
     }
 
     void World::deleteObject (const Ptr& ptr)

@@ -97,10 +97,10 @@ namespace MWPhysics
 
             Ogre::Vector3 traceDown(const MWWorld::Ptr &ptr);
 
-            std::pair<std::string,Ogre::Vector3> getHitContact(const std::string &name,
-                                                               const Ogre::Vector3 &origin,
-                                                               const Ogre::Quaternion &orientation,
-                                                               float queryDistance);
+            std::pair<MWWorld::Ptr,Ogre::Vector3> getHitContact(const std::string &name,
+                                                                const Ogre::Vector3 &origin,
+                                                                const Ogre::Quaternion &orientation,
+                                                                float queryDistance);
 
             // cast ray, return true if it hit something. if raycasringObjectOnlt is set to false, it ignores NPCs and objects with no collisions.
             bool castRay(const Ogre::Vector3 &from, const Ogre::Vector3 &to, bool raycastingObjectOnly = true, bool ignoreHeightMap = false);
