@@ -373,6 +373,20 @@ namespace MWPhysics
 
     bool PhysicsSystem::getObjectAABB(const MWWorld::Ptr &ptr, Ogre::Vector3 &min, Ogre::Vector3 &max)
     {
+        NifBullet::BulletShapeManager &shapeMgr = NifBullet::BulletShapeManager::getSingleton();
+        const std::string name = Misc::StringUtils::lowerCase(ptr.getClass().getModel(ptr));
+        NifBullet::BulletShapePtr shape = shapeMgr.load(name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+
+        if(shape->getCollisionShape())
+        {
+            float scale = ptr.getCellRef().mScale;
+            btVector3 btmin, btmax;
+            shape->getCollisionShape()->getAabb(btTransform::getIdentity(), btmin, btmax);
+            min = Ogre::Vector3(btmin.x(), btmin.y(), btmin.z()) * scale;
+            max = Ogre::Vector3(btmax.x(), btmax.y(), btmax.z()) * scale;
+            return true;
+        }
+
         return false;
     }
 
@@ -414,11 +428,6 @@ namespace MWPhysics
     bool PhysicsSystem::castRay(const Ogre::Vector3& from, const Ogre::Vector3& to, bool raycastingObjectOnly, bool ignoreHeightMap)
     {
         return false;
-    }
-
-    std::pair<bool,Ogre::Vector3> PhysicsSystem::castRay(const Ogre::Vector3 &orig, const Ogre::Vector3 &dir, float len)
-    {
-        return std::make_pair(false, Ogre::Vector3(0.0f));
     }
 
     std::pair<bool,Ogre::Vector3> PhysicsSystem::castRay(float mouseX, float mouseY)

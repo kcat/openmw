@@ -1482,22 +1482,13 @@ namespace MWWorld
     {
         MWWorld::Ptr::CellStore* cell = actor.getCell();
 
-        ESM::Position pos =
-            actor.getRefData().getPosition();
+        ESM::Position pos = actor.getRefData().getPosition();
         // We want only the Z part of the actor's rotation
         pos.rot[0] = 0;
         pos.rot[1] = 0;
 
-        Ogre::Vector3 orig =
-            Ogre::Vector3(pos.pos[0], pos.pos[1], pos.pos[2]);
-        Ogre::Vector3 dir = Ogre::Vector3(0, 0, -1);
-
-        float len = (pos.pos[2] >= 0) ? pos.pos[2] : -pos.pos[2];
-        len += 100.0;
-
-        std::pair<bool, Ogre::Vector3> hit =
-            mPhysics->castRay(orig, dir, len);
-        pos.pos[2] = hit.second.z;
+        Ogre::Vector3 hit = mPhysics->traceDown(actor);
+        pos.pos[2] = hit.z;
 
         Ptr dropped = copyObjectToCell(object, *cell, pos);
         if(actor == mPlayer->getPlayer()) // Only call if dropped by player

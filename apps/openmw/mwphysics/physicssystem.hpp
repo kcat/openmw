@@ -105,8 +105,6 @@ namespace MWPhysics
             // cast ray, return true if it hit something. if raycasringObjectOnlt is set to false, it ignores NPCs and objects with no collisions.
             bool castRay(const Ogre::Vector3 &from, const Ogre::Vector3 &to, bool raycastingObjectOnly = true, bool ignoreHeightMap = false);
 
-            std::pair<bool,Ogre::Vector3> castRay(const Ogre::Vector3 &orig, const Ogre::Vector3 &dir, float len);
-
             std::pair<bool,Ogre::Vector3> castRay(float mouseX, float mouseY);
             ///< cast ray from the mouse, return true if it hit something and the first result (in OGRE coordinates)
 
