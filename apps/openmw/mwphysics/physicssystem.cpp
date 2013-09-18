@@ -23,31 +23,23 @@
 
 namespace
 {
-    struct FilteredRayResultCallback : public btCollisionWorld::RayResultCallback
+    class ClosestNotMeRayResultCallback : public btCollisionWorld::ClosestRayResultCallback
     {
     private:
-        MWWorld::Ptr mFilter;
+        btCollisionObject *mMe;
 
     public:
-        FilteredRayResultCallback(const MWWorld::Ptr &filter) : mFilter(filter)
+        ClosestNotMeRayResultCallback(btCollisionObject *me)
+          : btCollisionWorld::ClosestRayResultCallback(btVector3(0, 0, 0), btVector3(0, 0, 0))
+          , mMe(me)
+        { }
+
+        btScalar addSingleResult(btCollisionWorld::LocalRayResult &rayResult, bool normalInWorldSpace)
         {
-        }
+            if(rayResult.m_collisionObject == mMe)
+                return 1.0f;
 
-        virtual btScalar addSingleResult(btCollisionWorld::LocalRayResult &rayResult, bool /*normalInWorldSpace*/)
-        {
-            // Caller already does the filter on the m_closestHitFraction
-            btAssert(rayResult.m_hitFraction <= m_closestHitFraction);
-
-            m_collisionObject = rayResult.m_collisionObject;
-            MWPhysics::ObjectInfo *inf;
-            if((inf=static_cast<MWPhysics::ObjectInfo*>(m_collisionObject->getUserPointer())) != NULL)
-            {
-                if(inf->getPtr() == mFilter)
-                    return btScalar(1.0f);
-            }
-            m_closestHitFraction = rayResult.m_hitFraction;
-
-            return rayResult.m_hitFraction;
+            return btCollisionWorld::ClosestRayResultCallback::addSingleResult(rayResult, normalInWorldSpace);
         }
     };
 }
@@ -380,6 +372,24 @@ namespace MWPhysics
 
     Ogre::Vector3 PhysicsSystem::traceDown(const MWWorld::Ptr &ptr)
     {
+        ActorMap::iterator aiter = mActors.find(ptr.getRefData().getHandle());
+        if(aiter != mActors.end())
+        {
+            const float *pos = ptr.getRefData().getPosition().pos;
+            btVector3 posFrom(pos[0], pos[1], pos[2]);
+            btVector3 posTo(pos[0], pos[1], pos[2]-200.0f);
+
+            Actor *actor = aiter->second;
+            ClosestNotMeRayResultCallback callback(actor->getCollisionObject());
+            mDynamicsWorld->rayTest(posFrom, posTo, callback);
+
+            if(callback.hasHit())
+            {
+                btVector3 res = posFrom.lerp(posTo, callback.m_closestHitFraction);
+                return Ogre::Vector3(res.x(), res.y(), res.z());
+            }
+        }
+
         return Ogre::Vector3(ptr.getRefData().getPosition().pos);
     }
 

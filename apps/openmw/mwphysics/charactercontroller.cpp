@@ -7,26 +7,6 @@
 
 namespace
 {
-    class ClosestNotMeRayResultCallback : public btCollisionWorld::ClosestRayResultCallback
-    {
-    private:
-        btCollisionObject *mMe;
-
-    public:
-        ClosestNotMeRayResultCallback(btCollisionObject *me)
-          : btCollisionWorld::ClosestRayResultCallback(btVector3(0, 0, 0), btVector3(0, 0, 0))
-          , mMe(me)
-        { }
-
-        btScalar addSingleResult(btCollisionWorld::LocalRayResult &rayResult, bool normalInWorldSpace)
-        {
-            if(rayResult.m_collisionObject == mMe)
-                return 1.0f;
-
-            return btCollisionWorld::ClosestRayResultCallback::addSingleResult(rayResult, normalInWorldSpace);
-        }
-    };
-
     class ClosestNotMeConvexResultCallback : public btCollisionWorld::ClosestConvexResultCallback
     {
     private:
