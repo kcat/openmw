@@ -265,6 +265,16 @@ namespace MWPhysics
 
     void PhysicsSystem::rotateObject(const MWWorld::Ptr& ptr)
     {
+        ObjectMap::iterator oiter = mObjects.find(ptr.getRefData().getHandle());
+        if(oiter != mObjects.end())
+        {
+            Object *object = oiter->second;
+
+            const Ogre::Quaternion &rot = ptr.getRefData().getBaseNode()->getOrientation();
+            object->setOrientation(rot);
+            return;
+        }
+
         /* Nothing to do for actors. */
     }
 

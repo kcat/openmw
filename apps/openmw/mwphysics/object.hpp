@@ -49,10 +49,12 @@ namespace MWPhysics
         Object(const MWWorld::Ptr &ptr, const NifBullet::BulletShapePtr &shape, PhysicsSystem *phys);
         virtual ~Object();
 
+        void resetCollisionObject();
+
+        void setOrientation(const Ogre::Quaternion &rot);
+
         btRigidBody *getCollisionObject() const
         { return mCollisionObject; }
-
-        void resetCollisionObject();
     };
 }
 
