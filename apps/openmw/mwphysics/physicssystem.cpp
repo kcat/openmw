@@ -437,7 +437,7 @@ namespace MWPhysics
 
     bool PhysicsSystem::castRay(const Ogre::Vector3& from, const Ogre::Vector3& to, bool raycastingObjectOnly, bool ignoreHeightMap)
     {
-        return false;
+        return true;
     }
 
     std::pair<bool,Ogre::Vector3> PhysicsSystem::castRay(float mouseX, float mouseY)
