@@ -49,9 +49,7 @@ void Object::resetCollisionObject()
 void Object::setOrientation(const Ogre::Quaternion &rot)
 {
     mCurrentTrans.setRotation(btQuaternion(rot.x, rot.y, rot.z, rot.w));
-
-    mCollisionObject->setCollisionFlags(mCollisionObject->getCollisionFlags() |
-                                        btCollisionObject::CF_KINEMATIC_OBJECT);
+    mCollisionObject->setWorldTransform(mCurrentTrans);
 }
 
 
