@@ -729,7 +729,7 @@ void CharacterController::update(float duration)
         bool inwater = world->isSwimming(mPtr);
         bool isrunning = cls.getStance(mPtr, MWWorld::Class::Run);
         bool sneak = cls.getStance(mPtr, MWWorld::Class::Sneak);
-        bool flying = world->isFlying(mPtr);
+        bool flying = world->isFlying(mPtr) || !world->getCollisionMode(mPtr);
         Ogre::Vector3 vec = cls.getMovementVector(mPtr);
         Ogre::Vector3 rot = cls.getRotationVector(mPtr);
         mMovementSpeed = cls.getSpeed(mPtr);

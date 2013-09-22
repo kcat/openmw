@@ -370,7 +370,7 @@ namespace MWPhysics
         return on;
     }
 
-    bool PhysicsSystem::hasCollisionEnabled(const MWWorld::Ptr &ptr) const
+    bool PhysicsSystem::getCollisionMode(const MWWorld::Ptr &ptr) const
     {
         ActorMap::const_iterator aiter = mActors.find(ptr.getRefData().getHandle());
         if(aiter == mActors.end())

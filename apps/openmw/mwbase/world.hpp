@@ -258,6 +258,9 @@ namespace MWBase
             /// collisions and gravity.
             /// \return Resulting mode
 
+            virtual bool getCollisionMode(const MWWorld::Ptr &actor) const = 0;
+            ///< Returns whether the given actor has any collisions enabled.
+
             virtual bool toggleRenderMode (RenderMode mode) = 0;
             ///< Toggle a render mode.
             ///< \return Resulting mode

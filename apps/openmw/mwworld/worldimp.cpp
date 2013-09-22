@@ -1130,6 +1130,11 @@ namespace MWWorld
         return mPhysics->toggleCollisionMode();
     }
 
+    bool World::getCollisionMode(const Ptr &actor) const
+    {
+        return mPhysics->getCollisionMode(actor);
+    }
+
     bool World::toggleRenderMode(RenderMode mode)
     {
         if(mode == Render_CollisionDebug)
@@ -1516,10 +1521,12 @@ namespace MWWorld
         if(stats.getMagicEffects().get(MWMechanics::EffectKey(ESM::MagicEffect::Levitate)).mMagnitude > 0)
             return true;
 
-        if(!mPhysics->hasCollisionEnabled(ptr))
-            return true;
-
-        // TODO: Check if flying creature
+        if(!ptr.getClass().isNpc())
+        {
+            MWWorld::LiveCellRef<ESM::Creature> *ref = ptr.get<ESM::Creature>();
+            if((ref->mBase->mFlags&ESM::Creature::Flies))
+                return true;
+        }
 
         return false;
     }
