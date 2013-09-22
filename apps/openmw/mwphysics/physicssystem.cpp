@@ -359,7 +359,7 @@ namespace MWPhysics
         if(on/*&& !flying && !swimming*/)
         {
             actor->getActionInterface()->setGravity(-627.2f);
-            actor->getActionInterface()->setFallSpeed(-62720.0f);
+            actor->getActionInterface()->setFallSpeed(-4005.5f);
         }
         else
         {

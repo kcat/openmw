@@ -151,7 +151,7 @@ CharacterController::CharacterController(btPairCachingGhostObject *ghostObject, 
   : mGhostObject(ghostObject)
   , mConvexShape(convexShape)
   , mVerticalVelocity(0.0f)
-  , mFallSpeed(-62720.0f /*100x gravity*/)
+  , mFallSpeed(-4005.5f)
   , mJumpSpeed(10.0f)
   , mGravity(-627.2f)
   , mStepHeight(stepHeight)
