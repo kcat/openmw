@@ -474,7 +474,7 @@ namespace MWPhysics
     }
 
 
-    void PhysicsSystem::queueObjectMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &movement)
+    void PhysicsSystem::queueObjectMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &movement, bool walking)
     {
         ActorMap::iterator aiter = mActors.find(ptr.getRefData().getHandle());
         if(aiter != mActors.end())
@@ -484,18 +484,17 @@ namespace MWPhysics
 
             const float *rot = ptr.getRefData().getPosition().rot;
             Ogre::Matrix3 mat3;
-            if(0/*isflying || isswimming*/ ||
-               !actor->getCollisionObject()->getBroadphaseHandle()->m_collisionFilterMask)
-            {
-                mat3.FromEulerAnglesZYX(Ogre::Radian(-rot[2]), Ogre::Radian(-rot[1]), Ogre::Radian(rot[0]));
-                velocity = mat3 * movement;
-            }
-            else
+            if(walking)
             {
                 mat3.FromAngleAxis(Ogre::Vector3::UNIT_Z, Ogre::Radian(-rot[2]));
                 if(movement.z > 0.0f)
                     actor->jump(movement.z);
                 velocity = mat3 * Ogre::Vector3(movement.x, movement.y, 0.0f);
+            }
+            else
+            {
+                mat3.FromEulerAnglesZYX(Ogre::Radian(-rot[2]), Ogre::Radian(-rot[1]), Ogre::Radian(rot[0]));
+                velocity = mat3 * movement;
             }
 
             actor->updateVelocity(velocity);

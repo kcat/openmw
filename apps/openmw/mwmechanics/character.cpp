@@ -707,6 +707,7 @@ void CharacterController::update(float duration)
     MWBase::World *world = MWBase::Environment::get().getWorld();
     const MWWorld::Class &cls = MWWorld::Class::get(mPtr);
     Ogre::Vector3 movement(0.0f);
+    bool walking = false;
 
     if(!cls.isActor())
     {
@@ -874,13 +875,17 @@ void CharacterController::update(float duration)
         rot *= duration * Ogre::Math::RadiansToDegrees(1.0f);
         world->rotateObject(mPtr, rot.x, rot.y, rot.z, true);
 
-        world->queueMovement(mPtr, vec);
+        walking = !(flying|inwater);
+        world->queueMovement(mPtr, vec, walking);
         movement = vec;
     }
     else if(cls.getCreatureStats(mPtr).isDead())
     {
-        MWBase::Environment::get().getWorld()->enableActorCollision(mPtr, false);
-        world->queueMovement(mPtr, Ogre::Vector3(0.0f));
+        bool inwater = world->isSwimming(mPtr);
+        bool flying = world->isFlying(mPtr) || !world->getCollisionMode(mPtr);
+        walking = !(flying|inwater);
+
+        world->enableActorCollision(mPtr, false);
     }
 
     if(mAnimation && !mSkipAnim)
@@ -906,7 +911,7 @@ void CharacterController::update(float duration)
         }
         // Update movement
         if(moved.squaredLength() > 1.0f)
-            world->queueMovement(mPtr, moved);
+            world->queueMovement(mPtr, moved, walking);
     }
     mSkipAnim = false;
 }

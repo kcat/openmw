@@ -112,7 +112,7 @@ namespace MWPhysics
 
             /// Queues velocity movement for a Ptr. If a Ptr is already queued, its velocity will
             /// be overwritten. Valid until the next call to applyQueuedMovement.
-            void queueObjectMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &velocity);
+            void queueObjectMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &velocity, bool walking);
 
             const PtrPositionList& applyQueuedMovement(float dt);
 

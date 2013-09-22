@@ -1054,9 +1054,9 @@ namespace MWWorld
         cellY = std::floor(y/cellSize);
     }
 
-    void World::queueMovement(const Ptr &ptr, const Vector3 &velocity)
+    void World::queueMovement(const Ptr &ptr, const Vector3 &velocity, bool walking)
     {
-        mPhysics->queueObjectMovement(ptr, velocity);
+        mPhysics->queueObjectMovement(ptr, velocity, walking);
     }
 
     void World::doPhysics(float duration)

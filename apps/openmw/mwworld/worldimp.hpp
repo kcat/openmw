@@ -288,9 +288,10 @@ namespace MWWorld
             virtual void positionToIndex (float x, float y, int &cellX, int &cellY) const;
             ///< Convert position to cell numbers
 
-            virtual void queueMovement(const Ptr &ptr, const Ogre::Vector3 &velocity);
+            virtual void queueMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &velocity, bool walking);
             ///< Queues movement for \a ptr (in local space), to be applied in the next call to
-            /// doPhysics.
+            /// doPhysics. If \a walking is true, velocity will only be rotated around the Z axis,
+            /// and upward movement will be translated to jumping.
 
             virtual bool castRay (float x1, float y1, float z1, float x2, float y2, float z2);
             ///< cast a Ray and return true if there is an object in the ray path.
