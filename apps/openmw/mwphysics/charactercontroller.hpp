@@ -52,12 +52,17 @@ private:
         return sUpAxisDirection;
     }
 
-    static btVector3 getNormalizedVector(const btVector3 & v)
+    static btVector3 getNormalizedVector(const btVector3 &v)
     {
         btVector3 n = v.normalized();
         if(n.length2() < SIMD_EPSILON)
             n.setValue(0, 0, 0);
         return n;
+    }
+
+    btScalar getSlope(const btVector3 &v) const
+    {
+        return v.angle(getUpAxisDirections()[mUpAxis]);
     }
 
     btVector3 computeReflectionDirection(const btVector3 &direction, const btVector3 &normal);

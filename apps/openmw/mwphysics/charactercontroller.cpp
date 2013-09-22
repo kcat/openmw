@@ -101,9 +101,7 @@ void CharacterController::checkOnGround(btCollisionWorld *collisionWorld, bool f
             for(int p = 0;p < manifold->getNumContacts();++p)
             {
                 const btManifoldPoint &pt = manifold->getContactPoint(p);
-                btVector3 normal = pt.m_normalWorldOnB * dir;
-                if(pt.getDistance() < 1.0f &&
-                   normal.angle(getUpAxisDirections()[mUpAxis]) <= mMaxSlopeRadians)
+                if(pt.getDistance() < 1.0f && getSlope(pt.m_normalWorldOnB * dir) <= mMaxSlopeRadians)
                 {
                     mWasOnGround = true;
                     return;
@@ -139,7 +137,7 @@ bool CharacterController::stepMove(btCollisionWorld *collisionWorld)
     start.setOrigin(movedPos);
     end.setOrigin(movedPos - getUpAxisDirections()[mUpAxis]*(mStepHeight+0.1f));
     res = sweepTrace(collisionWorld, start, end);
-    if(res.first >= 1.0f || res.second.angle(getUpAxisDirections()[mUpAxis]) > mMaxSlopeRadians)
+    if(res.first >= 1.0f || getSlope(res.second) > mMaxSlopeRadians)
         return false;
 
     mCurrentPosition = start.getOrigin().lerp(end.getOrigin(), res.first);
@@ -288,7 +286,7 @@ void CharacterController::stepForwardAndStrafe(btCollisionWorld *collisionWorld,
 
         // If we moved at all and hit a walkable surface, accept how far we got.
         if(callback.m_closestHitFraction > SIMD_EPSILON &&
-           callback.m_hitNormalWorld.angle(getUpAxisDirections()[mUpAxis]) <= mMaxSlopeRadians)
+           getSlope(callback.m_hitNormalWorld) <= mMaxSlopeRadians)
         {
             mCurrentPosition = mCurrentPosition.lerp(mTargetPosition, callback.m_closestHitFraction);
             mWasOnGround = (mGravity < 0.0f && mVerticalVelocity <= 0.0f);
