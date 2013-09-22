@@ -66,7 +66,7 @@ private:
 
     std::pair<btScalar,btVector3> sweepTrace(btCollisionWorld *collisionWorld, const btTransform &start, const btTransform &end) const;
 
-    bool checkOnGround(btCollisionWorld *collisionWorld) const;
+    void checkOnGround(btCollisionWorld *collisionWorld, bool forceUpdate=false);
 
     bool stepMove(btCollisionWorld *collisionWorld);
 

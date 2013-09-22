@@ -69,18 +69,48 @@ std::pair<btScalar,btVector3> CharacterController::sweepTrace(btCollisionWorld *
 }
 
 
-bool CharacterController::checkOnGround(btCollisionWorld *collisionWorld) const
+void CharacterController::checkOnGround(btCollisionWorld *collisionWorld, bool forceUpdate)
 {
+    mWasOnGround = false;
+
     if(!(mGravity < 0.0f && mVerticalVelocity <= 0.0f))
-        return false;
+        return;
 
-    btTransform start = mGhostObject->getWorldTransform();
-    btTransform end(start.getBasis(), start.getOrigin() - getUpAxisDirections()[mUpAxis]);
+    btHashedOverlappingPairCache *pairCache = mGhostObject->getOverlappingPairCache();
+    if(forceUpdate)
+    {
+        btDispatcher *dispatcher = collisionWorld->getDispatcher();
+        dispatcher->dispatchAllCollisionPairs(pairCache, collisionWorld->getDispatchInfo(), dispatcher);
+    }
 
-    std::pair<btScalar,btVector3> res = sweepTrace(collisionWorld, start, end);
-    if(res.first < 1.0f && res.second.angle(getUpAxisDirections()[mUpAxis]) <= mMaxSlopeRadians)
-        return true;
-    return false;
+    const btBroadphasePairArray &collisionArray = pairCache->getOverlappingPairArray();
+    int numpairs = pairCache->getNumOverlappingPairs();
+    for(int i = 0;i < numpairs;++i)
+    {
+        mManifoldArray.resize(0);
+
+        const btBroadphasePair &collisionPair = collisionArray[i];
+        if(collisionPair.m_algorithm)
+            collisionPair.m_algorithm->getAllContactManifolds(mManifoldArray);
+
+        for(int j = 0;j < mManifoldArray.size();++j)
+        {
+            btPersistentManifold *manifold = mManifoldArray[j];
+
+            btScalar dir = ((manifold->getBody0() == mGhostObject) ? btScalar(1.0f) : btScalar(-1.0f));
+            for(int p = 0;p < manifold->getNumContacts();++p)
+            {
+                const btManifoldPoint &pt = manifold->getContactPoint(p);
+                btVector3 normal = pt.m_normalWorldOnB * dir;
+                if(pt.getDistance() < 1.0f &&
+                   normal.angle(getUpAxisDirections()[mUpAxis]) <= mMaxSlopeRadians)
+                {
+                    mWasOnGround = true;
+                    return;
+                }
+            }
+        }
+    }
 }
 
 
@@ -170,7 +200,7 @@ bool CharacterController::recoverFromPenetration(btCollisionWorld *collisionWorl
                 const btManifoldPoint &pt = manifold->getContactPoint(p);
 
                 btScalar dist = pt.getDistance();
-                if(dist < 0.0)
+                if(dist <= -mGhostObject->getCollisionShape()->getMargin())
                 {
                     mCurrentPosition += pt.m_normalWorldOnB * directionSign * dist * btScalar(0.2);
                     penetration = true;
@@ -257,7 +287,7 @@ void CharacterController::stepForwardAndStrafe(btCollisionWorld *collisionWorld,
         }
 
         // If we moved at all and hit a walkable surface, accept how far we got.
-        if(!(callback.m_closestHitFraction < SIMD_EPSILON) &&
+        if(callback.m_closestHitFraction > SIMD_EPSILON &&
            callback.m_hitNormalWorld.angle(getUpAxisDirections()[mUpAxis]) <= mMaxSlopeRadians)
         {
             mCurrentPosition = mCurrentPosition.lerp(mTargetPosition, callback.m_closestHitFraction);
@@ -321,9 +351,9 @@ void CharacterController::playerStep(btCollisionWorld *collisionWorld, btScalar 
     if(!mUseWalkDirection && mVelocityTimeInterval <= 0)
         return;
 
-    mWasOnGround = checkOnGround(collisionWorld);
+    checkOnGround(collisionWorld);
     if(mWasOnGround)
-        mVerticalVelocity = std::max(mVerticalVelocity, 0.0f);
+        mVerticalVelocity = 0.0f;
 
     setRBForceImpulseBasedOnCollision();
 
@@ -351,36 +381,26 @@ void CharacterController::playerStep(btCollisionWorld *collisionWorld, btScalar 
 
     if(!(mGravity < 0.0f && mVerticalVelocity <= 0.0f))
         mWasOnGround = false;
-    else
+    else if(mWasOnGround)
     {
-        if(mWasOnGround)
-        {
-            btTransform start(btMatrix3x3::getIdentity(), mCurrentPosition);
-            btTransform end(btMatrix3x3::getIdentity(), mCurrentPosition - getUpAxisDirections()[mUpAxis]*mStepHeight);
-            std::pair<btScalar,btVector3> res = sweepTrace(collisionWorld, start, end);
-            mWasOnGround = (res.first < 1.0f && res.second.angle(getUpAxisDirections()[mUpAxis]) <= mMaxSlopeRadians);
-            if(mWasOnGround)
-            {
-                mCurrentPosition = start.getOrigin().lerp(end.getOrigin(), res.first);
-                mVerticalVelocity = 0.0f;
-                mWasJumping = false;
-            }
-        }
-        else
-        {
-            mWasOnGround = checkOnGround(collisionWorld);
-            if(mWasOnGround)
-            {
-                mVerticalVelocity = 0.0f;
-                mWasJumping = false;
-            }
-        }
+        btTransform start(btMatrix3x3::getIdentity(), mCurrentPosition + getUpAxisDirections()[mUpAxis]*0.5f);
+        btTransform end(btMatrix3x3::getIdentity(), mCurrentPosition - getUpAxisDirections()[mUpAxis]*mStepHeight);
+        std::pair<btScalar,btVector3> res = sweepTrace(collisionWorld, start, end);
+        if(res.first < 1.0f)
+            mCurrentPosition = start.getOrigin().lerp(end.getOrigin(), res.first);
     }
-    if(!mWasOnGround)
-        mVerticalVelocity += mGravity * dt;
 
     xform.setOrigin(mCurrentPosition);
     mGhostObject->setWorldTransform(xform);
+
+    checkOnGround(collisionWorld, true);
+    if(!mWasOnGround)
+        mVerticalVelocity += mGravity * dt;
+    else
+    {
+        mVerticalVelocity = 0.0f;
+        mWasJumping = false;
+    }
 }
 
 void CharacterController::setFallSpeed(btScalar fallSpeed)
@@ -430,7 +450,7 @@ btScalar CharacterController::getMaxSlope() const
 
 bool CharacterController::onGround() const
 {
-    return mWasOnGround && mVerticalVelocity == 0 && mGravity < 0.0f;
+    return mWasOnGround && mVerticalVelocity == 0.0f && mGravity < 0.0f;
 }
 
 void CharacterController::setWalkDirection(const btVector3 &walkDirection)
