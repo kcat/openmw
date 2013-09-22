@@ -256,10 +256,10 @@ namespace MWPhysics
         ActorMap::iterator aiter(mActors.find(ptr.getRefData().getHandle()));
         if(aiter != mActors.end())
         {
-            const float *pos = ptr.getRefData().getPosition().pos;
+            const Ogre::Vector3 &pos = ptr.getRefData().getBaseNode()->getPosition();
 
             Actor *actor = aiter->second;
-            actor->setOrigin(btVector3(pos[0], pos[1], pos[2]));
+            actor->setOrigin(btVector3(pos.x, pos.y, pos.z));
         }
     }
 

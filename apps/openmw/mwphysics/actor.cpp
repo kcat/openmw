@@ -42,9 +42,9 @@ void Actor::resetCollisionObject()
     mBBoxTransform.setOrigin(mShape->getBBoxTransform().getOrigin() * scale.x);
     mBBoxTransform.setBasis(mShape->getBBoxTransform().getBasis());
 
-    const float *pos = getPtr().getRefData().getPosition().pos;
+    const Ogre::Vector3 &pos = getPtr().getRefData().getBaseNode()->getPosition();
     btTransform startTrans(btMatrix3x3::getIdentity(),
-                           btVector3(pos[0], pos[1], pos[2]) + mBBoxTransform.getOrigin());
+                           btVector3(pos.x, pos.y, pos.z) + mBBoxTransform.getOrigin());
 
     mCollisionObject = new btPairCachingGhostObject();
     mCollisionObject->setCollisionShape(mCollisionShape);

@@ -15,15 +15,11 @@ Object::Object(const MWWorld::Ptr &ptr, const NifBullet::BulletShapePtr &shape, 
   , mShape(shape)
   , mCollisionObject(0)
 {
-    Ogre::Matrix3 mat3;
-    const ESM::Position &pos = getPtr().getRefData().getPosition();
+    const Ogre::Quaternion &rot = getPtr().getRefData().getBaseNode()->getOrientation();
+    const Ogre::Vector3 &pos = getPtr().getRefData().getBaseNode()->getPosition();
 
-    // Generate a rotation matrix that rotates first around Z, then Y, then X.
-    mat3.FromEulerAnglesXYZ(Ogre::Radian(-pos.rot[0]), Ogre::Radian(-pos.rot[1]), Ogre::Radian(-pos.rot[2]));
-    mCurrentTrans = btTransform(btMatrix3x3(mat3[0][0], mat3[0][1], mat3[0][2],
-                                            mat3[1][0], mat3[1][1], mat3[1][2],
-                                            mat3[2][0], mat3[2][1], mat3[2][2]),
-                                btVector3(pos.pos[0], pos.pos[1], pos.pos[2]));
+    mCurrentTrans = btTransform(btQuaternion(rot.x, rot.y, rot.z, rot.w),
+                                btVector3(pos.x, pos.y, pos.z));
 
     resetCollisionObject();
 }
