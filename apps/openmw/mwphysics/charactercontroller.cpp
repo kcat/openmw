@@ -67,7 +67,9 @@ btVector3 CharacterController::perpindicularComponent(const btVector3 &direction
 
 std::pair<btScalar,btVector3> CharacterController::sweepTrace(btCollisionWorld *collisionWorld, const btTransform &start, const btTransform &end) const
 {
-    ClosestNotMeConvexResultCallback callback(mGhostObject, getUpAxisDirections()[mUpAxis], mMaxSlopeCosine);
+    const btVector3 sweepDirNegative(start.getOrigin() - end.getOrigin());
+
+    ClosestNotMeConvexResultCallback callback(mGhostObject, sweepDirNegative, 0.0f);
     callback.m_collisionFilterGroup = getGhostObject()->getBroadphaseHandle()->m_collisionFilterGroup;
     callback.m_collisionFilterMask = getGhostObject()->getBroadphaseHandle()->m_collisionFilterMask;
 
