@@ -37,9 +37,15 @@ void Actor::resetCollisionObject()
     delete mCollisionShape;
 
     const Ogre::Vector3 &scale = mPtr.getRefData().getBaseNode()->getScale();
-    // Use a cylinder shape to help avoid actors getting caught by bounding box edges
-    mCollisionShape = new btCylinderShapeZ(mShape->getBBoxRadius() * scale.x);
-    mBBoxTransform.setOrigin(mShape->getBBoxTransform().getOrigin() * scale.x);
+    // Use a capsule shape to help avoid actors getting caught on edges
+    float minradius = std::min(mShape->getBBoxRadius().x(), mShape->getBBoxRadius().y());
+    float maxradius = std::max(mShape->getBBoxRadius().x(), mShape->getBBoxRadius().y());
+    float height = std::max(0.0f, mShape->getBBoxRadius().z()*2.0f - minradius*2.0f);
+    mCollisionShape = new btCapsuleShapeZ(minradius, height);
+    mCollisionShape->setLocalScaling(btVector3(scale.x,
+                                               scale.y * maxradius/minradius,
+                                               scale.z));
+    mBBoxTransform.setOrigin(mShape->getBBoxTransform().getOrigin() * btVector3(scale.x, scale.y, scale.z));
     mBBoxTransform.setBasis(mShape->getBBoxTransform().getBasis());
 
     const Ogre::Vector3 &pos = getPtr().getRefData().getBaseNode()->getPosition();

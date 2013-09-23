@@ -8,7 +8,7 @@
 #include "physicssystem.hpp"
 #include "object.hpp"
 
-class btCylinderShape;
+class btCapsuleShape;
 class btPairCachingGhostObject;
 class btActionInterface;
 
@@ -23,7 +23,7 @@ namespace MWPhysics
 
         NifBullet::BulletShapePtr mShape;
         btTransform mBBoxTransform;
-        btCylinderShape *mCollisionShape;
+        btCapsuleShape *mCollisionShape;
         btPairCachingGhostObject *mCollisionObject;
 
         CharacterController *mActionIface;

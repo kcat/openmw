@@ -27,6 +27,19 @@ namespace
             if(convexResult.m_hitCollisionObject == mMe)
                 return 1.0f;
 
+            btVector3 hitNormalWorld;
+            if(normalInWorldSpace)
+                hitNormalWorld = convexResult.m_hitNormalLocal;
+            else
+            {
+                ///need to transform normal into worldspace
+                hitNormalWorld = convexResult.m_hitCollisionObject->getWorldTransform().getBasis() * convexResult.m_hitNormalLocal;
+            }
+
+            btScalar dotUp = mUp.dot(hitNormalWorld);
+            if(dotUp < mMinSlopeDot)
+                return btScalar(1.0);
+
             return btCollisionWorld::ClosestConvexResultCallback::addSingleResult(convexResult, normalInWorldSpace);
         }
     };
