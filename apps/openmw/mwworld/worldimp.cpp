@@ -1056,7 +1056,7 @@ namespace MWWorld
 
     void World::queueMovement(const Ptr &ptr, const Vector3 &velocity, bool walking)
     {
-        mPhysics->queueObjectMovement(ptr, velocity, walking);
+        mPhysics->queueActorMovement(ptr, velocity, walking);
     }
 
     void World::doPhysics(float duration)

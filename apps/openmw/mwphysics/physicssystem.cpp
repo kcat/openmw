@@ -487,7 +487,7 @@ namespace MWPhysics
     }
 
 
-    void PhysicsSystem::queueObjectMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &movement, bool walking)
+    void PhysicsSystem::queueActorMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &movement, bool walking)
     {
         ActorMap::iterator aiter = mActors.find(ptr.getRefData().getHandle());
         if(aiter != mActors.end())
