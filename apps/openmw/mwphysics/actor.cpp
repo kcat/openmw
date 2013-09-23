@@ -66,6 +66,11 @@ void Actor::resetCollisionObject()
     mActionIface = new CharacterController(mCollisionObject, mCollisionShape, 32.0f, 2);
 }
 
+float Actor::getHeight() const
+{
+    return (mCollisionShape->getRadius() + mCollisionShape->getHalfHeight()) * 2.0f;
+}
+
 btVector3 Actor::getOrigin() const
 {
     return mActionIface->getPosition() - mBBoxTransform.getOrigin();

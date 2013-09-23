@@ -1535,6 +1535,8 @@ namespace MWWorld
     {
         float *fpos = object.getRefData().getPosition().pos;
         Ogre::Vector3 pos(fpos[0], fpos[1], fpos[2]);
+        // FIXME: Submerged = 90% under?
+        pos.z += mPhysics->getActorHeight(object) * 0.9f;
 
         return isUnderwater(object.getCell(), pos);
     }
@@ -1544,6 +1546,8 @@ namespace MWWorld
     {
         float *fpos = object.getRefData().getPosition().pos;
         Ogre::Vector3 pos(fpos[0], fpos[1], fpos[2]);
+        // FIXME: Swimming = 75% under?
+        pos.z += mPhysics->getActorHeight(object) * 0.75f;
 
         return isUnderwater(object.getCell(), pos);
     }

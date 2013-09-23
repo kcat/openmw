@@ -88,6 +88,8 @@ namespace MWPhysics
 
             bool isOnGround(const MWWorld::Ptr &ptr) const;
 
+            float getActorHeight(const MWWorld::Ptr &ptr) const;
+
             bool toggleCollisionMode();
 
             bool getCollisionMode(const MWWorld::Ptr &ptr) const;

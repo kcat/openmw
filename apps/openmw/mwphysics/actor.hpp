@@ -39,6 +39,8 @@ namespace MWPhysics
 
         void resetCollisionObject();
 
+        float getHeight() const;
+
         /// Gets the collision object's current position, corrected for the bounding box offset
         btVector3 getOrigin() const;
 
