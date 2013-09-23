@@ -876,7 +876,7 @@ namespace MWWorld
         if (haveToMove)
         {
             mRendering->moveObject(ptr, vec);
-            mPhysics->moveObject (ptr);
+            mPhysics->updatePosition(ptr);
         }
     }
 
@@ -909,7 +909,7 @@ namespace MWWorld
         if(ptr.getRefData().getBaseNode() == 0)
             return;
         mRendering->scaleObject(ptr, Vector3(scale,scale,scale));
-        mPhysics->scaleObject(ptr);
+        mPhysics->updateScale(ptr);
     }
 
     void World::rotateObjectImp (const Ptr& ptr, Ogre::Vector3 rot, bool adjust)
@@ -957,7 +957,7 @@ namespace MWWorld
         if(ptr.getRefData().getBaseNode() != 0)
         {
             mRendering->rotateObject(ptr);
-            mPhysics->rotateObject(ptr);
+            mPhysics->updateRotation(ptr);
         }
     }
 
@@ -988,7 +988,7 @@ namespace MWWorld
                                           Ogre::Quaternion(Ogre::Degree(-z), Ogre::Vector3::UNIT_Z));
 
             ptr.getRefData().getBaseNode()->setOrientation(worldRotQuat*localRotQuat);
-            mPhysics->rotateObject(ptr);
+            mPhysics->updateRotation(ptr);
         }
     }
 

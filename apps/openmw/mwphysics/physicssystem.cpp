@@ -251,7 +251,7 @@ namespace MWPhysics
         }
     }
 
-    void PhysicsSystem::moveObject(const MWWorld::Ptr& ptr)
+    void PhysicsSystem::updatePosition(const MWWorld::Ptr &ptr)
     {
         ActorMap::iterator aiter(mActors.find(ptr.getRefData().getHandle()));
         if(aiter != mActors.end())
@@ -263,7 +263,7 @@ namespace MWPhysics
         }
     }
 
-    void PhysicsSystem::rotateObject(const MWWorld::Ptr& ptr)
+    void PhysicsSystem::updateRotation(const MWWorld::Ptr &ptr)
     {
         ObjectMap::iterator oiter = mObjects.find(ptr.getRefData().getHandle());
         if(oiter != mObjects.end())
@@ -278,7 +278,7 @@ namespace MWPhysics
         /* Nothing to do for actors. */
     }
 
-    void PhysicsSystem::scaleObject(const MWWorld::Ptr& ptr)
+    void PhysicsSystem::updateScale(const MWWorld::Ptr &ptr)
     {
         ObjectMap::iterator obj(mObjects.find(ptr.getRefData().getHandle()));
         if(obj != mObjects.end())

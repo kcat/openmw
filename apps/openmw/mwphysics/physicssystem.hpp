@@ -76,11 +76,11 @@ namespace MWPhysics
             // have to keep this as handle for now as unloadcell only knows scenenode names
             void removeObject(const std::string& handle);
 
-            void moveObject(const MWWorld::Ptr& ptr);
+            void updatePosition(const MWWorld::Ptr &ptr);
 
-            void rotateObject(const MWWorld::Ptr& ptr);
+            void updateRotation(const MWWorld::Ptr &ptr);
 
-            void scaleObject(const MWWorld::Ptr& ptr);
+            void updateScale(const MWWorld::Ptr &ptr);
 
             void addHeightField(int x, int y, const float *heights, float triSize, int sqrtVerts);
 
