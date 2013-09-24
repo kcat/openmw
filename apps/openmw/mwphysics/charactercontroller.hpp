@@ -43,26 +43,34 @@ private:
     btScalar mMass;
 
 
-    static btVector3 *getUpAxisDirections()
+    static const btVector3 *getUpAxisDirections()
     {
-        static btVector3 sUpAxisDirection[3] = { btVector3(1, 0, 0),
-                                                 btVector3(0, 1, 0),
-                                                 btVector3(0, 0, 1)
-                                               };
+        static const btVector3 sUpAxisDirection[3] = { btVector3(1, 0, 0),
+                                                       btVector3(0, 1, 0),
+                                                       btVector3(0, 0, 1)
+                                                     };
         return sUpAxisDirection;
     }
 
     static btVector3 getNormalizedVector(const btVector3 &v)
     {
-        btVector3 n = v.normalized();
-        if(n.length2() < SIMD_EPSILON)
-            n.setValue(0, 0, 0);
+        btVector3 n;
+        if(v.fuzzyZero())
+            n.setZero();
+        else
+            n = v.normalized();
         return n;
+    }
+
+
+    const btVector3 &getUpDirection() const
+    {
+        return getUpAxisDirections()[mUpAxis];
     }
 
     btScalar getSlope(const btVector3 &v) const
     {
-        return v.angle(getUpAxisDirections()[mUpAxis]);
+        return v.angle(getUpDirection());
     }
 
     btVector3 computeReflectionDirection(const btVector3 &direction, const btVector3 &normal);

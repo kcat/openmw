@@ -80,7 +80,7 @@ std::pair<btScalar,btVector3> CharacterController::sweepTrace(btCollisionWorld *
 
     if(callback.hasHit())
         return std::make_pair(callback.m_closestHitFraction, callback.m_hitNormalWorld);
-    return std::make_pair(btScalar(1.0f), getUpAxisDirections()[mUpAxis]);
+    return std::make_pair(btScalar(1.0f), getUpDirection());
 }
 
 
@@ -132,8 +132,8 @@ bool CharacterController::stepMove(btCollisionWorld *collisionWorld)
     btVector3 moveDir = mTargetPosition - mCurrentPosition;
 
     // Step up
-    btTransform start(btMatrix3x3::getIdentity(), mCurrentPosition + getUpAxisDirections()[mUpAxis]);
-    btTransform end(btMatrix3x3::getIdentity(), mCurrentPosition + getUpAxisDirections()[mUpAxis]*mStepHeight);
+    btTransform start(btMatrix3x3::getIdentity(), mCurrentPosition + getUpDirection());
+    btTransform end(btMatrix3x3::getIdentity(), mCurrentPosition + getUpDirection()*mStepHeight);
     std::pair<btScalar,btVector3> res = sweepTrace(collisionWorld, start, end);
     if(res.first < SIMD_EPSILON)
         return false;
@@ -150,7 +150,7 @@ bool CharacterController::stepMove(btCollisionWorld *collisionWorld)
 
     // Set down
     start.setOrigin(movedPos);
-    end.setOrigin(movedPos - getUpAxisDirections()[mUpAxis]*(mStepHeight+0.1f));
+    end.setOrigin(movedPos - getUpDirection()*(mStepHeight+0.1f));
     res = sweepTrace(collisionWorld, start, end);
     if(res.first >= 1.0f || getSlope(res.second) > mMaxSlopeRadians)
         return false;
@@ -376,7 +376,7 @@ void CharacterController::playerStep(btCollisionWorld *collisionWorld, btScalar 
         mVerticalVelocity = mFallSpeed;
 
     btTransform xform = mGhostObject->getWorldTransform();
-    btVector3 inertia = getUpAxisDirections()[mUpAxis] * mVerticalVelocity;
+    btVector3 inertia = getUpDirection() * mVerticalVelocity;
     if(mUseWalkDirection)
         stepForwardAndStrafe(collisionWorld, (mWalkDirection + inertia)*dt);
     else
@@ -396,8 +396,8 @@ void CharacterController::playerStep(btCollisionWorld *collisionWorld, btScalar 
         mWasOnGround = false;
     else if(mWasOnGround)
     {
-        btTransform start(btMatrix3x3::getIdentity(), mCurrentPosition + getUpAxisDirections()[mUpAxis]*0.5f);
-        btTransform end(btMatrix3x3::getIdentity(), mCurrentPosition - getUpAxisDirections()[mUpAxis]*mStepHeight);
+        btTransform start(btMatrix3x3::getIdentity(), mCurrentPosition + getUpDirection()*0.5f);
+        btTransform end(btMatrix3x3::getIdentity(), mCurrentPosition - getUpDirection()*mStepHeight);
         std::pair<btScalar,btVector3> res = sweepTrace(collisionWorld, start, end);
         if(res.first < 1.0f)
             mCurrentPosition = start.getOrigin().lerp(end.getOrigin(), res.first);
