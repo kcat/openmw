@@ -330,9 +330,10 @@ namespace MWClass
         if(!weapon.isEmpty() && weapon.getTypeName() != typeid(ESM::Weapon).name())
             weapon = MWWorld::Ptr();
 
-        float dist = 100.0f * (!weapon.isEmpty() ?
-                               weapon.get<ESM::Weapon>()->mBase->mData.mReach :
-                               gmst.find("fHandToHandReach")->getFloat());
+        float dist = (weapon.isEmpty() ? (100.0f * gmst.find("fHandToHandReach")->getFloat())
+                                       : (gmst.find("fCombatDistance")->getFloat() *
+                                          weapon.get<ESM::Weapon>()->mBase->mData.mReach));
+        dist *= ptr.getCellRef().mScale;
         // TODO: Use second to work out the hit angle and where to spawn the blood effect
         MWWorld::Ptr victim = world->getHitContact(ptr, dist).first;
         if(victim.isEmpty()) // Didn't hit anything

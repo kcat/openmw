@@ -54,9 +54,9 @@ namespace
         btVector3 mContactPoint;
         btScalar mLeastDistSqr;
 
-        DeepestNotMeContactTestResultCallback(btCollisionObject *me, const btVector3 &origin)
+        DeepestNotMeContactTestResultCallback(btCollisionObject *me, const btVector3 &origin, float distance)
           : mMe(me), mOrigin(origin), mContactPoint(0,0,0),
-            mLeastDistSqr(std::numeric_limits<float>::max())
+            mLeastDistSqr(distance*distance)
         { }
 
         virtual btScalar addSingleResult(btManifoldPoint& cp,
@@ -66,12 +66,12 @@ namespace
             const MWPhysics::ObjectInfo *info = static_cast<const MWPhysics::ObjectInfo*>(col1->getUserPointer());
             if(info && col1 != mMe)
             {
-                btScalar distsqr = mOrigin.distance2(cp.getPositionWorldOnA());
-                if(mObject.isEmpty() || distsqr < mLeastDistSqr)
+                btScalar distsqr = mOrigin.distance2(cp.getPositionWorldOnB());
+                if(distsqr < mLeastDistSqr)
                 {
                     mObject = info->getPtr();
                     mLeastDistSqr = distsqr;
-                    mContactPoint = cp.getPositionWorldOnA();
+                    mContactPoint = cp.getPositionWorldOnB();
                 }
             }
 
@@ -481,28 +481,29 @@ namespace MWPhysics
         Actor *actor = aiter->second;
 
         const MWWorld::Store<ESM::GameSetting> &store = MWBase::Environment::get().getWorld()->getStore().get<ESM::GameSetting>();
-
         float angle_xy = store.find("fCombatAngleXY")->getFloat();
         float angle_z = store.find("fCombatAngleZ")->getFloat();
-        angle_xy = std::max(0.0f, std::min(angle_xy, 90.0f));
-        angle_z = std::max(0.0f, std::min(angle_z, 90.0f));
+        angle_xy = std::max(1.0f, std::min(angle_xy, 90.0f));
+        angle_z = std::max(1.0f, std::min(angle_z, 90.0f));
 
-        btConeShape *shape;
-        shape = new btConeShape(Ogre::Degree(angle_xy/2.0f).valueRadians(), queryDistance);
-        shape->setLocalScaling(btVector3(1, 1, Ogre::Degree(angle_z/2.0f).valueRadians() / shape->getRadius()));
+        float radius = Ogre::Math::Sin(Ogre::Degree(angle_xy*0.5f)) * queryDistance;
+        btConeShape *shape = new btConeShape(radius, queryDistance);
+        shape->setLocalScaling(btVector3(1.0f, 1.0f,
+                                         Ogre::Math::Sin(Ogre::Degree(angle_z*0.5f)) * queryDistance / radius));
 
         // The shape origin is its center, so we have to move it forward by half the length. The
         // real origin will be provided to the callback to find the closest.
-        Ogre::Vector3 center = origin + (orient * Ogre::Vector3(0.0f, queryDistance*0.5f, 0.0f));
-        Ogre::Quaternion rev_orient = orient * Ogre::Quaternion(Ogre::Radian(Ogre::Math::PI), Ogre::Vector3::UNIT_Z);
+        Ogre::Vector3 center = origin + (orient * Ogre::Vector3(0.0f, shape->getHeight()*0.5f, 0.0f));
 
         btCollisionObject *object = new btCollisionObject();
         object->setCollisionShape(shape);
-        object->setWorldTransform(btTransform(btQuaternion(rev_orient.x, rev_orient.y, rev_orient.z, rev_orient.w),
+        object->setWorldTransform(btTransform(btQuaternion(orient.x, orient.y, orient.z, orient.w) *
+                                              btQuaternion(btVector3(0.0f, 0.0f, 1.0f), btRadians(180.0f)),
                                               btVector3(center.x, center.y, center.z)));
 
         DeepestNotMeContactTestResultCallback callback(actor->getCollisionObject(),
-                                                       btVector3(origin.x, origin.y, origin.z));
+                                                       btVector3(origin.x, origin.y, origin.z),
+                                                       queryDistance);
         mDynamicsWorld->contactTest(object, callback);
 
         // Temporarily add the contact object to the dynamics world so it can be seen in the debug
