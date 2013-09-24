@@ -77,6 +77,18 @@ namespace
 
             return 0.f;
         }
+
+        // No version macros to check, so we have to instead check for the header
+        // btCollisionObjectWrapper is declared in.
+#ifdef BT_COLLISION_OBJECT_WRAPPER_H
+        virtual btScalar addSingleResult(btManifoldPoint &cp,
+                                         const btCollisionObjectWrapper *col0, int partId0, int index0,
+                                         const btCollisionObjectWrapper *col1, int partId1, int index1)
+        {
+            return addSingleResult(cp, col0->getCollisionObject(), partId0, index0,
+                                       col1->getCollisionObject(), partId1, index1);
+        }
+#endif
     };
 }
 
