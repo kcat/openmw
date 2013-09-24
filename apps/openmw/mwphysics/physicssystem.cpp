@@ -90,6 +90,46 @@ namespace
         }
 #endif
     };
+
+    class ClearObjectTimePairs {
+        btCollisionWorld *mCollisionWorld;
+
+    public:
+        ClearObjectTimePairs(btCollisionWorld *collisionWorld)
+          : mCollisionWorld(collisionWorld)
+        { }
+
+        void operator()(MWPhysics::ObjectTimePair &objtime) const
+        {
+            mCollisionWorld->removeCollisionObject(objtime.first);
+            delete objtime.first->getCollisionShape();
+            delete objtime.first;
+        }
+    };
+
+    class ProcessObjectTimePairs {
+        btCollisionWorld *mCollisionWorld;
+        float mTimePassed;
+
+    public:
+        ProcessObjectTimePairs(btCollisionWorld *collisionWorld, float dt)
+          : mCollisionWorld(collisionWorld), mTimePassed(dt)
+        { }
+
+        bool operator()(MWPhysics::ObjectTimePair &objtime) const
+        {
+            objtime.second -= mTimePassed;
+            if(objtime.second > 0.0f)
+                return false;
+
+            mCollisionWorld->removeCollisionObject(objtime.first);
+            delete objtime.first->getCollisionShape();
+            delete objtime.first;
+            objtime.first = 0;
+
+            return true;
+        }
+    };
 }
 
 
@@ -169,6 +209,10 @@ namespace MWPhysics
 
     PhysicsSystem::~PhysicsSystem()
     {
+        std::for_each(mTempCollisionObjects.begin(), mTempCollisionObjects.end(),
+                      ClearObjectTimePairs(mDynamicsWorld));
+        mTempCollisionObjects.clear();
+
         // Delete in reverse order that they were new'd
         delete mDebugDraw;
         delete mDynamicsWorld;
@@ -438,23 +482,29 @@ namespace MWPhysics
 
         const MWWorld::Store<ESM::GameSetting> &store = MWBase::Environment::get().getWorld()->getStore().get<ESM::GameSetting>();
 
-        btConeShape shape(Ogre::Degree(store.find("fCombatAngleXY")->getFloat()/2.0f).valueRadians(),
-                          queryDistance);
-        shape.setLocalScaling(btVector3(1, 1, Ogre::Degree(store.find("fCombatAngleZ")->getFloat()/2.0f).valueRadians() /
-                                              shape.getRadius()));
+        btConeShape *shape;
+        shape = new btConeShape(Ogre::Degree(store.find("fCombatAngleXY")->getFloat()/2.0f).valueRadians(),
+                                queryDistance);
+        shape->setLocalScaling(btVector3(1, 1, Ogre::Degree(store.find("fCombatAngleZ")->getFloat()/2.0f).valueRadians() /
+                                               shape->getRadius()));
 
         // The shape origin is its center, so we have to move it forward by half the length. The
         // real origin will be provided to the callback to find the closest.
         Ogre::Vector3 center = origin + (orient * Ogre::Vector3(0.0f, queryDistance*0.5f, 0.0f));
 
-        btCollisionObject object;
-        object.setCollisionShape(&shape);
-        object.setWorldTransform(btTransform(btQuaternion(orient.x, orient.y, orient.z, orient.w),
-                                             btVector3(center.x, center.y, center.z)));
+        btCollisionObject *object = new btCollisionObject();
+        object->setCollisionShape(shape);
+        object->setWorldTransform(btTransform(btQuaternion(orient.x, orient.y, orient.z, orient.w),
+                                              btVector3(center.x, center.y, center.z)));
 
         DeepestNotMeContactTestResultCallback callback(actor->getCollisionObject(),
                                                        btVector3(origin.x, origin.y, origin.z));
-        mDynamicsWorld->contactTest(&object, callback);
+        mDynamicsWorld->contactTest(object, callback);
+
+        // Temporarily add the contact object to the dynamics world so it can be seen in the debug
+        // draw (no group or mask so nothing will hit it later).
+        mDynamicsWorld->addCollisionObject(object, 0, 0);
+        mTempCollisionObjects.push_back(std::make_pair(object, 1.0f));
 
         return std::make_pair(callback.mObject, Ogre::Vector3(&callback.mContactPoint[0]));
     }
@@ -528,6 +578,11 @@ namespace MWPhysics
 
     const PtrPositionList& PhysicsSystem::applyQueuedMovement(float dt)
     {
+        ObjectTimeList::iterator otiter = mTempCollisionObjects.begin();
+        while((otiter=std::find_if(otiter, mTempCollisionObjects.end(),
+                                   ProcessObjectTimePairs(mDynamicsWorld, dt))) != mTempCollisionObjects.end())
+            otiter = mTempCollisionObjects.erase(otiter);
+
         mMovementResults.clear();
 
         mTimeAccum += dt;

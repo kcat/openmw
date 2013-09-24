@@ -23,6 +23,7 @@ class btBroadphaseInterface;
 class btSequentialImpulseConstraintSolver;
 class btDiscreteDynamicsWorld;
 
+class btCollisionObject;
 class btRigidBody;
 
 
@@ -41,6 +42,9 @@ namespace MWPhysics
     class Actor;
 
     typedef std::vector<std::pair<MWWorld::Ptr,Ogre::Vector3> > PtrPositionList;
+
+    typedef std::pair<btCollisionObject*,float> ObjectTimePair;
+    typedef std::vector<ObjectTimePair> ObjectTimeList;
 
     class PhysicsSystem
     {
@@ -61,6 +65,8 @@ namespace MWPhysics
         HeightmapMap mHeightmaps;
         ObjectMap mObjects;
         ActorMap mActors;
+
+        ObjectTimeList mTempCollisionObjects;
 
         public:
             PhysicsSystem(Ogre::SceneManager *sceneMgr);
