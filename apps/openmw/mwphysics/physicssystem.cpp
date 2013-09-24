@@ -482,19 +482,23 @@ namespace MWPhysics
 
         const MWWorld::Store<ESM::GameSetting> &store = MWBase::Environment::get().getWorld()->getStore().get<ESM::GameSetting>();
 
+        float angle_xy = store.find("fCombatAngleXY")->getFloat();
+        float angle_z = store.find("fCombatAngleZ")->getFloat();
+        angle_xy = std::max(0.0f, std::min(angle_xy, 90.0f));
+        angle_z = std::max(0.0f, std::min(angle_z, 90.0f));
+
         btConeShape *shape;
-        shape = new btConeShape(Ogre::Degree(store.find("fCombatAngleXY")->getFloat()/2.0f).valueRadians(),
-                                queryDistance);
-        shape->setLocalScaling(btVector3(1, 1, Ogre::Degree(store.find("fCombatAngleZ")->getFloat()/2.0f).valueRadians() /
-                                               shape->getRadius()));
+        shape = new btConeShape(Ogre::Degree(angle_xy/2.0f).valueRadians(), queryDistance);
+        shape->setLocalScaling(btVector3(1, 1, Ogre::Degree(angle_z/2.0f).valueRadians() / shape->getRadius()));
 
         // The shape origin is its center, so we have to move it forward by half the length. The
         // real origin will be provided to the callback to find the closest.
         Ogre::Vector3 center = origin + (orient * Ogre::Vector3(0.0f, queryDistance*0.5f, 0.0f));
+        Ogre::Quaternion rev_orient = orient * Ogre::Quaternion(Ogre::Radian(Ogre::Math::PI), Ogre::Vector3::UNIT_Z);
 
         btCollisionObject *object = new btCollisionObject();
         object->setCollisionShape(shape);
-        object->setWorldTransform(btTransform(btQuaternion(orient.x, orient.y, orient.z, orient.w),
+        object->setWorldTransform(btTransform(btQuaternion(rev_orient.x, rev_orient.y, rev_orient.z, rev_orient.w),
                                               btVector3(center.x, center.y, center.z)));
 
         DeepestNotMeContactTestResultCallback callback(actor->getCollisionObject(),
