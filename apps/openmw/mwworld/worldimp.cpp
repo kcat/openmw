@@ -173,7 +173,7 @@ namespace MWWorld
       mSky (true), mCells (mStore, mEsm),
       mActivationDistanceOverride (mActivationDistanceOverride),
       mFallback(fallbackMap), mPlayIntro(0), mTeleportEnabled(true),
-      mFacedDistance(std::numeric_limits<float>::max())
+      mFacedDistance(std::numeric_limits<float>::max()), mGodMode(false)
     {
         mPhysics = new MWPhysics::PhysicsSystem(renderer.getScene());
 
@@ -1882,9 +1882,16 @@ namespace MWWorld
         stats.getSkill(ESM::Skill::Acrobatics).setModified(gmst.find("fWerewolfAcrobatics")->getFloat(), 0);
     }
 
+    bool World::getGodModeState()
+    {
+        return mGodMode;
+    }
+
     bool World::toggleGodMode()
     {
-        return false;
+        mGodMode = !mGodMode;
+
+        return mGodMode;
     }
 
 }

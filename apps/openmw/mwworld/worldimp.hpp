@@ -76,6 +76,8 @@ namespace MWWorld
 
             Cells mCells;
 
+            bool mGodMode;
+
             // not implemented
             World (const World&);
             World& operator= (const World&);
@@ -451,6 +453,8 @@ namespace MWWorld
             virtual void setWerewolf(const MWWorld::Ptr& actor, bool werewolf);
 
             virtual void applyWerewolfAcrobatics(const MWWorld::Ptr& actor);
+
+            virtual bool getGodModeState();
 
             virtual bool toggleGodMode();
     };

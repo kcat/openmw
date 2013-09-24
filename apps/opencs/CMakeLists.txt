@@ -18,12 +18,12 @@ opencs_hdrs_noqt (model/doc
 
 
 opencs_units (model/world
-    idtable idtableproxymodel regionmap
+    idtable idtableproxymodel regionmap data
     )
 
 
 opencs_units_noqt (model/world
-    universalid data record commands columnbase scriptcontext cell refidcollection
+    universalid record commands columnbase scriptcontext cell refidcollection
     refidadapter refiddata refidadapterimp ref collectionbase refcollection columns
     )
 
@@ -64,7 +64,7 @@ opencs_units (view/world
 
 opencs_units_noqt (view/world
     dialoguesubview subviews
-    enumdelegate vartypedelegate recordstatusdelegate refidtypedelegate datadisplaydelegate
+    enumdelegate vartypedelegate recordstatusdelegate idtypedelegate datadisplaydelegate
     scripthighlighter idvalidator
     )
 
