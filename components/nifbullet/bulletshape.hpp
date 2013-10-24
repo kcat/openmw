@@ -91,7 +91,7 @@ public:
         }
     }
 
-    /// Operator used to convert a ResourcePtr to a TextFilePtr
+    /// Operator used to convert a ResourcePtr to a BulletShapePtr
     BulletShapePtr& operator=(const Ogre::ResourcePtr& r)
     {
         if(pRep == static_cast<BulletShape*>(r.getPointer()))
@@ -102,7 +102,7 @@ public:
         // lock & copy other mutex pointer
         OGRE_LOCK_MUTEX(*r.OGRE_AUTO_MUTEX_NAME)
         OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
-        pRep = static_cast<TextFile*>(r.getPointer());
+        pRep = static_cast<BulletShape*>(r.getPointer());
         pUseCount = r.useCountPointer();
         useFreeMethod = r.freeMethod();
         if (pUseCount)
