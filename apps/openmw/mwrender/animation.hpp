@@ -52,6 +52,20 @@ protected:
         virtual void setValue(Ogre::Real value);
     };
 
+    class EffectAnimationValue : public Ogre::ControllerValue<Ogre::Real>
+    {
+    private:
+        float mTime;
+    public:
+        EffectAnimationValue() : mTime(0) {  }
+        void addTime(float time) { mTime += time; }
+        void resetTime(float value) { mTime = value; }
+
+        virtual Ogre::Real getValue() const;
+        virtual void setValue(Ogre::Real value);
+    };
+
+
 
     class NullAnimationValue : public Ogre::ControllerValue<Ogre::Real>
     {
@@ -95,12 +109,23 @@ protected:
 
     typedef std::map<Ogre::MovableObject*,std::string> ObjectAttachMap;
 
+    struct EffectParams
+    {
+        std::string mModelName; // Just here so we don't add the same effect twice
+        NifOgre::ObjectScenePtr mObjects;
+        int mEffectId;
+        bool mLoop;
+        std::string mBoneName;
+    };
+
+    std::vector<EffectParams> mEffects;
+
     MWWorld::Ptr mPtr;
     Camera *mCamera;
 
     Ogre::SceneNode *mInsert;
     Ogre::Entity *mSkelBase;
-    NifOgre::ObjectList mObjectRoot;
+    NifOgre::ObjectScenePtr mObjectRoot;
     AnimSourceList mAnimSources;
     Ogre::Node *mAccumRoot;
     Ogre::Node *mNonAccumRoot;
@@ -164,13 +189,18 @@ protected:
     void addAnimSource(const std::string &model);
 
     /** Adds an additional light to the given object list using the specified ESM record. */
-    void addExtraLight(Ogre::SceneManager *sceneMgr, NifOgre::ObjectList &objlist, const ESM::Light *light);
+    void addExtraLight(Ogre::SceneManager *sceneMgr, NifOgre::ObjectScenePtr objlist, const ESM::Light *light);
 
-    static void destroyObjectList(Ogre::SceneManager *sceneMgr, NifOgre::ObjectList &objects);
-
-    static void setRenderProperties(const NifOgre::ObjectList &objlist, Ogre::uint32 visflags, Ogre::uint8 solidqueue, Ogre::uint8 transqueue, Ogre::Real dist=0.0f);
+    static void setRenderProperties(NifOgre::ObjectScenePtr objlist, Ogre::uint32 visflags, Ogre::uint8 solidqueue,
+                                    Ogre::uint8 transqueue, Ogre::Real dist=0.0f,
+                                    bool enchantedGlow=false, Ogre::Vector3* glowColor=NULL);
 
     void clearAnimSources();
+
+    // TODO: Should not be here
+    Ogre::Vector3 getEnchantmentColor(MWWorld::Ptr item);
+
+    void updateEffects(float duration);
 
 public:
     Animation(const MWWorld::Ptr &ptr, Ogre::SceneNode *node);
@@ -178,6 +208,22 @@ public:
 
     const MWWorld::Ptr &getPtr() const
     { return mPtr; }
+
+    /**
+     * @brief Add an effect mesh attached to a bone or the insert scene node
+     * @param model
+     * @param effectId An ID for this effect. Note that adding the same ID again won't add another effect.
+     * @param loop Loop the effect. If false, it is removed automatically after it finishes playing. If true,
+     *              you need to remove it manually using removeEffect when the effect should end.
+     * @param bonename Bone to attach to, or empty string to use the scene node instead
+     * @param texture override the texture specified in the model's materials
+     * @note Will not add an effect twice.
+     */
+    void addEffect (const std::string& model, int effectId, bool loop = false, const std::string& bonename = "", std::string texture = "");
+    void removeEffect (int effectId);
+    void getLoopingEffects (std::vector<int>& out);
+
+    virtual void setAlpha(float alpha) {}
 
     void updatePtr(const MWWorld::Ptr &ptr);
 
@@ -231,6 +277,7 @@ public:
     virtual Ogre::Vector3 runAnimation(float duration);
 
     virtual void showWeapons(bool showWeapon);
+    virtual void showShield(bool show) {}
 
     void enableLights(bool enable);
 

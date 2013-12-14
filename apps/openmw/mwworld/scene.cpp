@@ -114,15 +114,15 @@ namespace MWWorld
         mRendering.removeCell(*iter);
 
         MWBase::Environment::get().getWorld()->getLocalScripts().clearCell (*iter);
+
         MWBase::Environment::get().getMechanicsManager()->drop (*iter);
+
         MWBase::Environment::get().getSoundManager()->stopSound (*iter);
         mActiveCells.erase(*iter);
     }
 
     void Scene::loadCell (Ptr::CellStore *cell, Loading::Listener* loadingListener)
     {
-        // register local scripts
-        MWBase::Environment::get().getWorld()->getLocalScripts().addCell (cell);
         std::pair<CellStoreCollection::iterator, bool> result = mActiveCells.insert(cell);
 
         if(result.second)
@@ -159,11 +159,16 @@ namespace MWWorld
             mRendering.requestMap(cell);
             mRendering.configureAmbient(*cell);
         }
+
+        // register local scripts
+        // ??? Should this go into the above if block ???
+        MWBase::Environment::get().getWorld()->getLocalScripts().addCell (cell);
     }
 
     void Scene::playerCellChange(MWWorld::CellStore *cell, const ESM::Position& pos, bool adjustPlayerPos)
     {
         MWBase::World *world = MWBase::Environment::get().getWorld();
+        MWWorld::Ptr old = world->getPlayer().getPlayer();
         world->getPlayer().setCell(cell);
 
         MWWorld::Ptr player = world->getPlayer().getPlayer();
@@ -184,7 +189,7 @@ namespace MWWorld
         MWBase::MechanicsManager *mechMgr =
             MWBase::Environment::get().getMechanicsManager();
 
-        mechMgr->add(player);
+        mechMgr->updateCell(old, player);
         mechMgr->watchActor(player);
 
         MWBase::Environment::get().getWindowManager()->changeCell(mCurrentCell);
@@ -205,9 +210,6 @@ namespace MWWorld
 
         Loading::Listener* loadingListener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
         Loading::ScopedLoad load(loadingListener);
-
-        // remove active
-        MWBase::Environment::get().getMechanicsManager()->remove(MWBase::Environment::get().getWorld()->getPlayer().getPlayer());
 
         std::string loadingExteriorText = "#{sLoadingMessage3}";
         loadingListener->setLabel(loadingExteriorText);

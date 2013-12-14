@@ -244,8 +244,8 @@ private:
 
     OEngine::Render::OgreRenderer &mRendering;
 
-    MWRender::Objects mObjects;
-    MWRender::Actors mActors;
+    MWRender::Objects* mObjects;
+    MWRender::Actors* mActors;
 
     MWRender::NpcAnimation *mPlayerAnimation;
 

@@ -57,13 +57,13 @@ RenderingManager::RenderingManager(OEngine::Render::OgreRenderer& _rend, const b
                                    const boost::filesystem::path& cacheDir, MWWorld::Fallback* fallback)
     : mRendering(_rend)
     , mFallback(fallback)
-    , mObjects(mRendering)
-    , mActors(mRendering, this)
     , mPlayerAnimation(NULL)
     , mAmbientMode(0)
     , mSunEnabled(0)
     , mTerrain(NULL)
 {
+    mActors = new MWRender::Actors(mRendering, this);
+    mObjects = new MWRender::Objects(mRendering);
     // select best shader mode
     bool openGL = (Ogre::Root::getSingleton ().getRenderSystem ()->getName().find("OpenGL") != std::string::npos);
     bool glES = (Ogre::Root::getSingleton ().getRenderSystem ()->getName().find("OpenGL ES") != std::string::npos);
@@ -158,8 +158,8 @@ RenderingManager::RenderingManager(OEngine::Render::OgreRenderer& _rend, const b
     mRootNode = mRendering.getScene()->getRootSceneNode();
     mRootNode->createChildSceneNode("player");
 
-    mObjects.setRootNode(mRootNode);
-    mActors.setRootNode(mRootNode);
+    mObjects->setRootNode(mRootNode);
+    mActors->setRootNode(mRootNode);
 
     mCamera = new MWRender::Camera(mRendering.getCamera());
 
@@ -197,6 +197,8 @@ RenderingManager::~RenderingManager ()
     delete mCompositors;
     delete mWater;
     delete mVideoPlayer;
+    delete mActors;
+    delete mObjects;
     delete mFactory;
 }
 
@@ -206,10 +208,10 @@ MWRender::SkyManager* RenderingManager::getSkyManager()
 }
 
 MWRender::Objects& RenderingManager::getObjects(){
-    return mObjects;
+    return *mObjects;
 }
 MWRender::Actors& RenderingManager::getActors(){
-    return mActors;
+    return *mActors;
 }
 
 OEngine::Render::Fader* RenderingManager::getFader()
@@ -219,8 +221,8 @@ OEngine::Render::Fader* RenderingManager::getFader()
 
 void RenderingManager::removeCell (MWWorld::Ptr::CellStore *store)
 {
-    mObjects.removeCell(store);
-    mActors.removeCell(store);
+    mObjects->removeCell(store);
+    mActors->removeCell(store);
     mDebugging->cellRemoved(store);
 }
 
@@ -236,7 +238,7 @@ void RenderingManager::toggleWater()
 
 void RenderingManager::cellAdded (MWWorld::Ptr::CellStore *store)
 {
-    mObjects.buildStaticGeometry (*store);
+    mObjects->buildStaticGeometry (*store);
     sh::Factory::getInstance().unloadUnreferencedMaterials();
     mDebugging->cellAdded(store);
     waterAdded(store);
@@ -250,8 +252,8 @@ void RenderingManager::addObject (const MWWorld::Ptr& ptr){
 
 void RenderingManager::removeObject (const MWWorld::Ptr& ptr)
 {
-    if (!mObjects.deleteObject (ptr))
-        mActors.deleteObject (ptr);
+    if (!mObjects->deleteObject (ptr))
+        mActors->deleteObject (ptr);
 }
 
 void RenderingManager::moveObject (const MWWorld::Ptr& ptr, const Ogre::Vector3& position)
@@ -291,9 +293,9 @@ RenderingManager::updateObjectCell(const MWWorld::Ptr &old, const MWWorld::Ptr &
     parent->removeChild(child);
 
     if (MWWorld::Class::get(old).isActor()) {
-        mActors.updateObjectCell(old, cur);
+        mActors->updateObjectCell(old, cur);
     } else {
-        mObjects.updateObjectCell(old, cur);
+        mObjects->updateObjectCell(old, cur);
     }
 }
 
@@ -311,7 +313,7 @@ void RenderingManager::rebuildPtr(const MWWorld::Ptr &ptr)
     if(ptr.getRefData().getHandle() == "player")
         anim = mPlayerAnimation;
     else if(MWWorld::Class::get(ptr).isActor())
-        anim = dynamic_cast<NpcAnimation*>(mActors.getAnimation(ptr));
+        anim = dynamic_cast<NpcAnimation*>(mActors->getAnimation(ptr));
     if(anim)
     {
         anim->rebuild();
@@ -375,8 +377,8 @@ void RenderingManager::update (float duration, bool paused)
     if(paused)
         return;
 
-    mActors.update (duration);
-    mObjects.update (duration);
+    mActors->update (duration);
+    mObjects->update (duration);
 
 
     mSkyManager->update(duration);
@@ -410,8 +412,8 @@ std::pair<float,MWWorld::Ptr> RenderingManager::getFacedHandle(const Ogre::Ray &
     std::pair<float,MWWorld::Ptr> ret = std::make_pair(std::numeric_limits<float>::max(), MWWorld::Ptr());
 
     // Actors first, so they'll help cull objects that need more detailed per-polygon checking
-    mActors.fillIntersectingActors(ray, queryDistance, mFacedHandles);
-    mObjects.fillIntersectingObjects(ray, queryDistance, mFacedHandles);
+    mActors->fillIntersectingActors(ray, queryDistance, mFacedHandles);
+    mObjects->fillIntersectingObjects(ray, queryDistance, mFacedHandles);
     std::vector<std::pair<float,Animation*> >::iterator iter = mFacedHandles.begin();
     for(;iter != mFacedHandles.end();iter++)
     {
@@ -675,7 +677,7 @@ void RenderingManager::requestMap(MWWorld::Ptr::CellStore* cell)
     {
         assert(mTerrain);
 
-        Ogre::AxisAlignedBox dims = mObjects.getDimensions(cell);
+        Ogre::AxisAlignedBox dims = mObjects->getDimensions(cell);
         Ogre::Vector2 center(cell->mCell->getGridX() + 0.5, cell->mCell->getGridY() + 0.5);
         dims.merge(mTerrain->getWorldBoundingBox(center));
 
@@ -685,7 +687,7 @@ void RenderingManager::requestMap(MWWorld::Ptr::CellStore* cell)
         mLocalMap->requestMap(cell, dims.getMinimum().z, dims.getMaximum().z);
     }
     else
-        mLocalMap->requestMap(cell, mObjects.getDimensions(cell));
+        mLocalMap->requestMap(cell, mObjects->getDimensions(cell));
 }
 
 void RenderingManager::preCellChange(MWWorld::Ptr::CellStore* cell)
@@ -695,13 +697,13 @@ void RenderingManager::preCellChange(MWWorld::Ptr::CellStore* cell)
 
 void RenderingManager::disableLights(bool sun)
 {
-    mObjects.disableLights();
+    mObjects->disableLights();
     sunDisable(sun);
 }
 
 void RenderingManager::enableLights(bool sun)
 {
-    mObjects.enableLights();
+    mObjects->enableLights();
     sunEnable(sun);
 }
 
@@ -877,7 +879,7 @@ void RenderingManager::processChangedSettings(const Settings::CategorySettingVec
 
     if (rebuild)
     {
-        mObjects.rebuildStaticGeometry();
+        mObjects->rebuildStaticGeometry();
         if (mTerrain)
             mTerrain->applyMaterials(Settings::Manager::getBool("enabled", "Shadows"),
                                      Settings::Manager::getBool("split", "Shadows"));
@@ -896,6 +898,8 @@ void RenderingManager::setMenuTransparency(float val)
 
 void RenderingManager::windowResized(int x, int y)
 {
+    Settings::Manager::setInt("resolution x", "Video", x);
+    Settings::Manager::setInt("resolution y", "Video", y);
     mRendering.adjustViewport();
     mCompositors->recreate();
 
@@ -931,18 +935,17 @@ void RenderingManager::renderPlayer(const MWWorld::Ptr &ptr)
 {
     if(!mPlayerAnimation)
     {
-        mPlayerAnimation = new NpcAnimation(ptr, ptr.getRefData().getBaseNode(),
-                                            MWWorld::Class::get(ptr).getInventoryStore(ptr),
-                                            RV_Actors);
+        mPlayerAnimation = new NpcAnimation(ptr, ptr.getRefData().getBaseNode(), RV_Actors);
     }
     else
     {
         // Reconstruct the NpcAnimation in-place
         mPlayerAnimation->~NpcAnimation();
-        new(mPlayerAnimation) NpcAnimation(ptr, ptr.getRefData().getBaseNode(),
-                                           MWWorld::Class::get(ptr).getInventoryStore(ptr),
-                                           RV_Actors);
+        new(mPlayerAnimation) NpcAnimation(ptr, ptr.getRefData().getBaseNode(), RV_Actors);
     }
+    // Ensure CustomData -> autoEquip -> animation update
+    ptr.getClass().getInventoryStore(ptr);
+
     mCamera->setAnimation(mPlayerAnimation);
     mWater->removeEmitter(ptr);
     mWater->addEmitter(ptr);
@@ -993,9 +996,14 @@ void RenderingManager::setupExternalRendering (MWRender::ExternalRendering& rend
 
 Animation* RenderingManager::getAnimation(const MWWorld::Ptr &ptr)
 {
-    Animation *anim = mActors.getAnimation(ptr);
+    Animation *anim = mActors->getAnimation(ptr);
+
     if(!anim && ptr.getRefData().getHandle() == "player")
         anim = mPlayerAnimation;
+
+    if (!anim)
+        anim = mObjects->getAnimation(ptr);
+
     return anim;
 }
 

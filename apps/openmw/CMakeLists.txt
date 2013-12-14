@@ -7,6 +7,9 @@ set(GAME
     main.cpp
     engine.cpp
 )
+if(NOT WIN32)
+    set(GAME ${GAME} crashcatcher.cpp)
+endif()
 set(GAME_HEADER
     engine.hpp
     config.hpp
@@ -38,7 +41,8 @@ add_openmw_dir (mwgui
     enchantingdialog trainingwindow travelwindow imagebutton exposedwindow cursor spellicons
     merchantrepair repair soulgemdialog companionwindow bookpage journalviewmodel journalbooks
     keywordsearch itemmodel containeritemmodel inventoryitemmodel sortfilteritemmodel itemview
-    tradeitemmodel companionitemmodel pickpocketitemmodel fontloader controllers
+    tradeitemmodel companionitemmodel pickpocketitemmodel fontloader controllers savegamedialog
+    recharge
     )
 
 add_openmw_dir (mwdialogue
@@ -62,6 +66,7 @@ add_openmw_dir (mwworld
     cells localscripts customdata weather inventorystore ptr actionopen actionread
     actionequip timestamp actionalchemy cellstore actionapply actioneat
     esmstore store recordcmp fallback actionrepair actionsoulgem livecellref actiondoor
+    contentloader esmloader omwloader actiontrap
     )
 
 add_openmw_dir (mwclass
@@ -72,7 +77,7 @@ add_openmw_dir (mwclass
 add_openmw_dir (mwmechanics
     mechanicsmanagerimp stat character creaturestats magiceffects movement actors objects
     drawstate spells activespells npcstats aipackage aisequence alchemy aiwander aitravel aifollow
-    aiescort aiactivate repair enchanting pathfinding security
+    aiescort aiactivate aicombat repair enchanting pathfinding security spellsuccess spellcasting
     )
 
 add_openmw_dir (mwbase
