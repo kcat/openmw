@@ -11,49 +11,39 @@
 namespace NifBullet
 {
 
-class TriangleMesh : public btTriangleIndexVertexArray
+TriangleMesh::TriangleMesh()
 {
-    btAlignedObjectArray<btVector3> mVertices;
-    btAlignedObjectArray<unsigned short> mIndices;
+    btIndexedMesh meshIndex;
+    meshIndex.m_numTriangles = 0;
+    meshIndex.m_numVertices = 0;
+    meshIndex.m_indexType = PHY_SHORT;
+    meshIndex.m_triangleIndexBase = 0;
+    meshIndex.m_triangleIndexStride = 3*sizeof(short);
+    meshIndex.m_vertexBase = 0;
+    meshIndex.m_vertexStride = sizeof(btVector3);
+    m_indexedMeshes.push_back(meshIndex);
+}
 
-public:
-    TriangleMesh()
-    {
-        btIndexedMesh meshIndex;
-        meshIndex.m_numTriangles = 0;
-        meshIndex.m_numVertices = 0;
-        meshIndex.m_indexType = PHY_SHORT;
-        meshIndex.m_triangleIndexBase = 0;
-        meshIndex.m_triangleIndexStride = 3*sizeof(short);
-        meshIndex.m_vertexBase = 0;
-        meshIndex.m_vertexStride = sizeof(btVector3);
-        m_indexedMeshes.push_back(meshIndex);
-    }
+void TriangleMesh::addVertex(const btVector3 &vertex)
+{
+    mVertices.push_back(vertex);
+}
 
-    virtual void preallocateVertices(int) { }
-    virtual void preallocateIndices(int) { }
+void TriangleMesh::addTriangleIndices(unsigned short idx1, unsigned short idx2, unsigned short idx3)
+{
+    mIndices.push_back(idx1);
+    mIndices.push_back(idx2);
+    mIndices.push_back(idx3);
+}
 
-    void addVertex(const btVector3 &vertex)
-    {
-        mVertices.push_back(vertex);
-    }
+void TriangleMesh::finalise()
+{
+    m_indexedMeshes[0].m_vertexBase = (unsigned char*)&mVertices[0];
+    m_indexedMeshes[0].m_numVertices = mVertices.size();
 
-    void addTriangleIndices(unsigned short idx1, unsigned short idx2, unsigned short idx3)
-    {
-        mIndices.push_back(idx1);
-        mIndices.push_back(idx2);
-        mIndices.push_back(idx3);
-    }
-
-    void finalise()
-    {
-        m_indexedMeshes[0].m_vertexBase = (unsigned char*)&mVertices[0];
-        m_indexedMeshes[0].m_numVertices = mVertices.size();
-
-        m_indexedMeshes[0].m_triangleIndexBase = (unsigned char*)&mIndices[0];
-        m_indexedMeshes[0].m_numTriangles = mIndices.size()/3;
-    }
-};
+    m_indexedMeshes[0].m_triangleIndexBase = (unsigned char*)&mIndices[0];
+    m_indexedMeshes[0].m_numTriangles = mIndices.size()/3;
+}
 
 
 void BulletShapeLoader::load(const std::string &name, BulletShape *shape)

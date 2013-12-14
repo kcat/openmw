@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
+
 
 namespace Nif
 {
@@ -14,6 +16,26 @@ namespace NifBullet
 {
 
 class BulletShape;
+
+
+class TriangleMesh : public btTriangleIndexVertexArray
+{
+    btAlignedObjectArray<btVector3> mVertices;
+    btAlignedObjectArray<unsigned short> mIndices;
+
+public:
+    TriangleMesh();
+
+    virtual void preallocateVertices(int) { }
+    virtual void preallocateIndices(int) { }
+
+    void addVertex(const btVector3 &vertex);
+
+    void addTriangleIndices(unsigned short idx1, unsigned short idx2, unsigned short idx3);
+
+    void finalise();
+};
+
 
 class BulletShapeLoader
 {
