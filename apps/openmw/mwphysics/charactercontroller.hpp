@@ -88,7 +88,6 @@ public:
                         btScalar stepHeight, int upAxis=1);
 
     bool recoverFromPenetration(btCollisionWorld *collisionWorld);
-    void setRBForceImpulseBasedOnCollision();
     void updateTargetPositionBasedOnCollision(const btVector3 &hitNormal);
     void stepForwardAndStrafe(btCollisionWorld *collisionWorld, const btVector3 &walkMove);
     void setVelocityForTimeInterval(const btVector3 &velocity, btScalar timeInterval);

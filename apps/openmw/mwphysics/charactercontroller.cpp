@@ -229,28 +229,6 @@ bool CharacterController::recoverFromPenetration(btCollisionWorld *collisionWorl
     return penetration;
 }
 
-void CharacterController::setRBForceImpulseBasedOnCollision()
-{
-    if(!mWalkDirection.isZero())
-    {
-        const btBroadphasePairArray &collisionArray = mGhostObject->getOverlappingPairCache()->getOverlappingPairArray();
-        for(int i = 0;i < collisionArray.size();i++)
-        {
-            const btBroadphasePair &collisionPair = collisionArray[i];
-
-            btCollisionObject *obj = (btCollisionObject*)collisionPair.m_pProxy1->m_clientObject;
-            btRigidBody *rb = btRigidBody::upcast(obj);
-            if(rb && rb->getInvMass() != btScalar(0.0f) && mMass > rb->getInvMass())
-            {
-                btScalar resultMass = mMass - rb->getInvMass();
-                btVector3 reflection = computeReflectionDirection(mWalkDirection * resultMass,
-                                                                  getNormalizedVector(mWalkDirection));
-                rb->applyCentralImpulse(reflection * -1);
-            }
-        }
-    }
-}
-
 void CharacterController::updateTargetPositionBasedOnCollision(const btVector3 &hitNormal)
 {
     btVector3 movementDirection = mTargetPosition - mCurrentPosition;
@@ -367,8 +345,6 @@ void CharacterController::playerStep(btCollisionWorld *collisionWorld, btScalar 
     checkOnGround(collisionWorld);
     if(mWasOnGround)
         mVerticalVelocity = 0.0f;
-
-    setRBForceImpulseBasedOnCollision();
 
     if(mVerticalVelocity > 0 && mVerticalVelocity > mJumpSpeed)
         mVerticalVelocity = mJumpSpeed;
