@@ -34,6 +34,8 @@ public:
     void addTriangleIndices(unsigned short idx1, unsigned short idx2, unsigned short idx3);
 
     void finalise();
+
+    TriangleMesh *clone(float scale) const;
 };
 
 

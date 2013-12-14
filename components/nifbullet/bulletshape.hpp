@@ -31,7 +31,7 @@ class BulletShape : public Ogre::Resource
     btVector3 mBBoxRadius;
     btTransform mBBoxTransform;
 
-    static btCollisionShape *duplicateCollisionShape(btCollisionShape *shape, btScalar scale);
+    btCollisionShape *duplicateCollisionShape(btCollisionShape *shape, btScalar scale);
 
     static void destroyCollisionShape(btCollisionShape *shape);
 

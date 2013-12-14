@@ -116,8 +116,15 @@ btCollisionShape *BulletShape::duplicateCollisionShape(btCollisionShape *shape, 
 
     if(btBvhTriangleMeshShape *trishape = dynamic_cast<btBvhTriangleMeshShape*>(shape))
     {
-        btScaledBvhTriangleMeshShape *newShape;
-        newShape = new btScaledBvhTriangleMeshShape(trishape, btVector3(scale, scale, scale));
+        const NifBullet::TriangleMesh *mesh = dynamic_cast<NifBullet::TriangleMesh*>(trishape->getMeshInterface());
+        btCollisionShape *newShape;
+        if(mesh == NULL)
+            newShape = new btScaledBvhTriangleMeshShape(trishape, btVector3(scale, scale, scale));
+        else
+        {
+            mMeshIfaces.push_back(mesh->clone(scale));
+            newShape = new btBvhTriangleMeshShape(mMeshIfaces.back(), true);
+        }
         return newShape;
     }
 

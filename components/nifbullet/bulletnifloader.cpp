@@ -45,6 +45,16 @@ void TriangleMesh::finalise()
     m_indexedMeshes[0].m_numTriangles = mIndices.size()/3;
 }
 
+TriangleMesh *TriangleMesh::clone(float scale) const
+{
+    TriangleMesh *newMesh = new TriangleMesh;
+    for(int i = 0;i < mVertices.size();i++)
+        newMesh->addVertex(mVertices[i] * scale);
+    newMesh->mIndices = mIndices;
+    newMesh->finalise();
+    return newMesh;
+}
+
 
 void BulletShapeLoader::load(const std::string &name, BulletShape *shape)
 {
