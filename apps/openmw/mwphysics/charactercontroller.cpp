@@ -173,7 +173,7 @@ CharacterController::CharacterController(btPairCachingGhostObject *ghostObject, 
   , mWalkDirection(0.0f, 0.0f, 0.0f)
   , mNormalizedDirection(0.0f, 0.0f, 0.0f)
   , mCurrentPosition(0.0f, 0.0f, 0.0f)
-  , mWasOnGround(false)
+  , mWasOnGround(true)
   , mWasJumping(false)
   , mUseGhostObjectSweepTest(true)
   , mUseWalkDirection(true)
