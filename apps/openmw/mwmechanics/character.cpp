@@ -983,6 +983,7 @@ void CharacterController::update(float duration)
     MWBase::World *world = MWBase::Environment::get().getWorld();
     const MWWorld::Class &cls = MWWorld::Class::get(mPtr);
     Ogre::Vector3 movement(0.0f);
+    bool walking = false;
 
     updateVisibility();
 
@@ -1256,15 +1257,18 @@ void CharacterController::update(float duration)
                 world->rotateObject(mPtr, rot.x, rot.y, 0.0f, true);
 
             if (mMovementAnimVelocity == 0)
-                world->queueMovement(mPtr, vec);
+                world->queueMovement(mPtr, vec, false);
         }
 
+        walking = !(flying|inwater);
+        world->queueMovement(mPtr, vec, walking);
         movement = vec;
         cls.getMovementSettings(mPtr).mPosition[0] = cls.getMovementSettings(mPtr).mPosition[1] = cls.getMovementSettings(mPtr).mPosition[2] = 0;
     }
     else if(cls.getCreatureStats(mPtr).isDead())
     {
-        world->queueMovement(mPtr, Ogre::Vector3(0.0f));
+        world->queueMovement(mPtr, Ogre::Vector3(0.0f), walking);
+        world->enableActorCollision(mPtr, false);
     }
 
     if(mAnimation && !mSkipAnim)
@@ -1297,7 +1301,7 @@ void CharacterController::update(float duration)
 
         // Update movement
         if(mMovementAnimVelocity > 0)
-            world->queueMovement(mPtr, moved);
+            world->queueMovement(mPtr, moved, walking);
     }
     mSkipAnim = false;
 }

@@ -19,8 +19,6 @@
 #include <extern/shiny/Main/Factory.hpp>
 #include <extern/shiny/Platforms/Ogre/OgrePlatform.hpp>
 
-#include <openengine/bullet/physic.hpp>
-
 #include <components/settings/settings.hpp>
 #include <components/terrain/world.hpp>
 
@@ -52,14 +50,12 @@ using namespace Ogre;
 namespace MWRender {
 
 RenderingManager::RenderingManager(OEngine::Render::OgreRenderer& _rend, const boost::filesystem::path& resDir,
-                                   const boost::filesystem::path& cacheDir, OEngine::Physic::PhysicEngine* engine,
-                                   MWWorld::Fallback* fallback)
+                                   const boost::filesystem::path& cacheDir, MWWorld::Fallback* fallback)
     : mRendering(_rend)
     , mFallback(fallback)
     , mPlayerAnimation(NULL)
     , mAmbientMode(0)
     , mSunEnabled(0)
-    , mPhysicsEngine(engine)
     , mTerrain(NULL)
     , mEffectManager(NULL)
 {
@@ -172,7 +168,7 @@ RenderingManager::RenderingManager(OEngine::Render::OgreRenderer& _rend, const b
 
     mSun = 0;
 
-    mDebugging = new Debugging(mRootNode, engine);
+    mDebugging = new Debugging(mRootNode);
     mLocalMap = new MWRender::LocalMap(&mRendering, this);
 
     mWater = new MWRender::Water(mRendering.getCamera(), this);
@@ -350,9 +346,8 @@ void RenderingManager::update (float duration, bool paused)
         Ogre::Vector3 orig, dest;
         mCamera->getPosition(orig, dest);
 
-        btVector3 btOrig(orig.x, orig.y, orig.z);
-        btVector3 btDest(dest.x, dest.y, dest.z);
-        std::pair<bool,float> test = mPhysicsEngine->sphereCast(mRendering.getCamera()->getNearClipDistance()*2.5, btOrig, btDest);
+        // FIXME: Find point of collision for 3rd-person camera
+        std::pair<bool,float> test = std::make_pair(false, 0.0f);
         if(test.first)
             mCamera->setCameraDistance(test.second * orig.distance(dest), false, false);
     }
@@ -401,6 +396,30 @@ void RenderingManager::update (float duration, bool paused)
 
     mWater->update(duration, playerPos);
 }
+
+
+std::pair<float,MWWorld::Ptr> RenderingManager::getFacedHandle(const Ogre::Ray &ray, float queryDistance)
+{
+    std::pair<float,MWWorld::Ptr> ret = std::make_pair(std::numeric_limits<float>::max(), MWWorld::Ptr());
+
+    // Actors first, so they'll help cull objects that need more detailed per-polygon checking
+    mActors->fillIntersectingActors(ray, queryDistance, mFacedHandles);
+    mObjects->fillIntersectingObjects(ray, queryDistance, mFacedHandles);
+    std::vector<std::pair<float,Animation*> >::iterator iter = mFacedHandles.begin();
+    for(;iter != mFacedHandles.end();iter++)
+    {
+        if(iter->first < ret.first)
+        {
+            float dist = iter->second->getRealIntersection(ray, iter->first);
+            if(dist < ret.first && dist <= queryDistance)
+                ret = std::make_pair(dist, iter->second->getPtr());
+        }
+    }
+    mFacedHandles.clear();
+
+    return ret;
+}
+
 
 void RenderingManager::preRenderTargetUpdate(const RenderTargetEvent &evt)
 {

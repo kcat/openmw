@@ -1,12 +1,12 @@
 #ifndef GAME_MWWORLD_WORLDIMP_H
 #define GAME_MWWORLD_WORLDIMP_H
 
+#include "../mwrender/renderingmanager.hpp"
 #include "../mwrender/debugging.hpp"
 
 #include "ptr.hpp"
 #include "scene.hpp"
 #include "esmstore.hpp"
-#include "physicssystem.hpp"
 #include "cells.hpp"
 #include "localscripts.hpp"
 #include "timestamp.hpp"
@@ -22,6 +22,14 @@ namespace Ogre
     class Vector3;
 }
 
+namespace OEngine
+{
+    namespace Render
+    {
+        class OgreRenderer;
+    }
+}
+
 namespace ESM
 {
     struct Position;
@@ -32,17 +40,17 @@ namespace Files
     class Collections;
 }
 
-namespace Render
-{
-    class OgreRenderer;
-}
-
 namespace MWRender
 {
     class SkyManager;
     class CellRender;
     class Animation;
     class Camera;
+}
+
+namespace MWPhysics
+{
+    class PhysicsSystem;
 }
 
 struct ContentLoader;
@@ -57,7 +65,10 @@ namespace MWWorld
     class World : public MWBase::World
     {
             MWWorld::Fallback mFallback;
+
             MWRender::RenderingManager* mRendering;
+
+            MWPhysics::PhysicsSystem *mPhysics;
 
             MWWorld::WeatherManager* mWeatherManager;
 
@@ -67,12 +78,9 @@ namespace MWWorld
             MWWorld::ESMStore mStore;
             LocalScripts mLocalScripts;
             MWWorld::Globals mGlobalVariables;
-            MWWorld::PhysicsSystem *mPhysics;
             bool mSky;
 
             Cells mCells;
-
-            OEngine::Physic::PhysicEngine* mPhysEngine;
 
             bool mGodMode;
             std::vector<std::string> mContentFiles;
@@ -84,7 +92,7 @@ namespace MWWorld
             Ptr getPtrViaHandle (const std::string& handle, CellStore& cellStore);
 
             int mActivationDistanceOverride;
-            std::string mFacedHandle;
+            Ptr mFacedPtr;
             float mFacedDistance;
 
             std::map<MWWorld::Ptr, int> mDoorStates;
@@ -378,9 +386,10 @@ namespace MWWorld
             virtual void positionToIndex (float x, float y, int &cellX, int &cellY) const;
             ///< Convert position to cell numbers
 
-            virtual void queueMovement(const Ptr &ptr, const Ogre::Vector3 &velocity);
+            virtual void queueMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &velocity, bool walking);
             ///< Queues movement for \a ptr (in local space), to be applied in the next call to
-            /// doPhysics.
+            /// doPhysics. If \a walking is true, velocity will only be rotated around the Z axis,
+            /// and upward movement will be translated to jumping.
 
             virtual bool castRay (float x1, float y1, float z1, float x2, float y2, float z2);
             ///< cast a Ray and return true if there is an object in the ray path.
@@ -389,6 +398,9 @@ namespace MWWorld
             ///< Toggle collision mode for player. If disabled player object should ignore
             /// collisions and gravity.
             ///< \return Resulting mode
+
+            virtual bool getCollisionMode(const MWWorld::Ptr &actor) const;
+            ///< Returns whether the given actor has any collisions enabled.
 
             virtual bool toggleRenderMode (RenderMode mode);
             ///< Toggle a render mode.

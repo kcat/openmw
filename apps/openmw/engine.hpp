@@ -50,6 +50,11 @@ namespace OEngine
   }
 }
 
+namespace NifBullet
+{
+    class BulletShapeManager;
+}
+
 namespace Files
 {
     struct ConfigurationManager;
@@ -89,6 +94,8 @@ namespace OMW
             Files::Collections mFileCollections;
             bool mFSStrict;
             Translation::Storage mTranslationDataStorage;
+
+            NifBullet::BulletShapeManager *mBulletShapeManager;
 
             // not implemented
             Engine (const Engine&);

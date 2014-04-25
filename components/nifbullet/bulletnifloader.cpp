@@ -1,307 +1,221 @@
- /*
-OpenMW - The completely unofficial reimplementation of Morrowind
-Copyright (C) 2008-2010  Nicolay Korslund
-Email: < korslund@gmail.com >
-WWW: http://openmw.sourceforge.net/
-
-This file (ogre_nif_loader.cpp) is part of the OpenMW package.
-
-OpenMW is distributed as free software: you can redistribute it
-and/or modify it under the terms of the GNU General Public License
-version 3, as published by the Free Software Foundation.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-version 3 along with this program. If not, see
-http://www.gnu.org/licenses/ .
-
-*/
-
 #include "bulletnifloader.hpp"
 
-#include <cstdio>
-
-
-#include <components/misc/stringops.hpp>
+#include <btBulletCollisionCommon.h>
 
 #include "../nif/niffile.hpp"
 #include "../nif/node.hpp"
-#include "../nif/data.hpp"
-#include "../nif/property.hpp"
-#include "../nif/controller.hpp"
-#include "../nif/extra.hpp"
-#include <libs/platform/strings.h>
 
-#include <vector>
-#include <list>
-// For warning messages
-#include <iostream>
+#include "bulletshape.hpp"
 
-// float infinity
-#include <limits>
-
-typedef unsigned char ubyte;
 
 namespace NifBullet
 {
 
-struct TriangleMeshShape : public btBvhTriangleMeshShape
+TriangleMesh::TriangleMesh()
 {
-    TriangleMeshShape(btStridingMeshInterface* meshInterface, bool useQuantizedAabbCompression)
-        : btBvhTriangleMeshShape(meshInterface, useQuantizedAabbCompression)
-    {
-    }
+    btIndexedMesh meshIndex;
+    meshIndex.m_numTriangles = 0;
+    meshIndex.m_numVertices = 0;
+    meshIndex.m_indexType = PHY_SHORT;
+    meshIndex.m_triangleIndexBase = 0;
+    meshIndex.m_triangleIndexStride = 3*sizeof(short);
+    meshIndex.m_vertexBase = 0;
+    meshIndex.m_vertexStride = sizeof(btVector3);
+    m_indexedMeshes.push_back(meshIndex);
+}
 
-    virtual ~TriangleMeshShape()
-    {
-        delete getTriangleInfoMap();
-        delete m_meshInterface;
-    }
-};
-
-ManualBulletShapeLoader::~ManualBulletShapeLoader()
+void TriangleMesh::addVertex(const btVector3 &vertex)
 {
+    mVertices.push_back(vertex);
+}
+
+void TriangleMesh::addTriangleIndices(unsigned short idx1, unsigned short idx2, unsigned short idx3)
+{
+    mIndices.push_back(idx1);
+    mIndices.push_back(idx2);
+    mIndices.push_back(idx3);
+}
+
+void TriangleMesh::finalise()
+{
+    m_indexedMeshes[0].m_vertexBase = (unsigned char*)&mVertices[0];
+    m_indexedMeshes[0].m_numVertices = mVertices.size();
+
+    m_indexedMeshes[0].m_triangleIndexBase = (unsigned char*)&mIndices[0];
+    m_indexedMeshes[0].m_numTriangles = mIndices.size()/3;
+}
+
+TriangleMesh *TriangleMesh::clone(float scale) const
+{
+    TriangleMesh *newMesh = new TriangleMesh;
+    for(int i = 0;i < mVertices.size();i++)
+        newMesh->addVertex(mVertices[i] * scale);
+    newMesh->mIndices = mIndices;
+    newMesh->finalise();
+    return newMesh;
 }
 
 
-btVector3 ManualBulletShapeLoader::getbtVector(Ogre::Vector3 const &v)
+void BulletShapeLoader::load(const std::string &name, BulletShape *shape)
 {
-    return btVector3(v[0], v[1], v[2]);
-}
+    Nif::NIFFile::ptr nif = Nif::NIFFile::create(name);
+    assert(nif->numRoots() > 0);
 
-void ManualBulletShapeLoader::loadResource(Ogre::Resource *resource)
-{
-    mShape = static_cast<OEngine::Physic::BulletShape *>(resource);
-    mResourceName = mShape->getName();
-    mShape->mCollide = false;
-    mBoundingBox = NULL;
-    mShape->mBoxTranslation = Ogre::Vector3(0,0,0);
-    mShape->mBoxRotation = Ogre::Quaternion::IDENTITY;
-    mHasShape = false;
-
-    btTriangleMesh* mesh1 = new btTriangleMesh();
-
-    // Load the NIF. TODO: Wrap this in a try-catch block once we're out
-    // of the early stages of development. Right now we WANT to catch
-    // every error as early and intrusively as possible, as it's most
-    // likely a sign of incomplete code rather than faulty input.
-    Nif::NIFFile::ptr pnif (Nif::NIFFile::create (mResourceName.substr(0, mResourceName.length()-7)));
-    Nif::NIFFile & nif = *pnif.get ();
-    if (nif.numRoots() < 1)
-    {
-        warn("Found no root nodes in NIF.");
-        return;
-    }
-
-    Nif::Record *r = nif.getRoot(0);
+    const Nif::Record *r = nif->getRoot(0);
     assert(r != NULL);
 
-    Nif::Node *node = dynamic_cast<Nif::Node*>(r);
-    if (node == NULL)
-    {
-        warn("First root in file was not a node, but a " +
-             r->recName + ". Skipping file.");
-        return;
-    }
+    const Nif::Node *node = dynamic_cast<const Nif::Node*>(r);
+    assert(node != NULL);
 
-    mShape->mHasCollisionNode = hasRootCollisionNode(node);
+    const Nif::Node *colroot = findRootCollisionNode(node);
+    shape->mHasRootCollision = (colroot != NULL);
 
-    //do a first pass
-    handleNode(mesh1, node,0,false,false,false);
-
-    if(mBoundingBox != NULL)
-    {
-       mShape->mCollisionShape = mBoundingBox;
-       delete mesh1;
-    }
-    else if (mHasShape && mShape->mCollide)
-    {
-        mShape->mCollisionShape = new TriangleMeshShape(mesh1,true);
-    }
+    if(colroot)
+        buildFromRootCollision(colroot, shape);
     else
-        delete mesh1;
+        buildFromModel(node, shape);
+    if(!shape->getCollisionShape())
+        std::cerr<< "No collision shape found for "<<name <<std::endl;
 
-    //second pass which create a shape for raycasting.
-    mResourceName = mShape->getName();
-    mShape->mCollide = false;
-    mBoundingBox = NULL;
-    mShape->mBoxTranslation = Ogre::Vector3(0,0,0);
-    mShape->mBoxRotation = Ogre::Quaternion::IDENTITY;
-    mHasShape = false;
-
-    btTriangleMesh* mesh2 = new btTriangleMesh();
-
-    handleNode(mesh2, node,0,true,true,false);
-
-    if(mBoundingBox != NULL)
-    {
-       mShape->mRaycastingShape = mBoundingBox;
-       delete mesh2;
-    }
-    else if (mHasShape)
-    {
-        mShape->mRaycastingShape = new TriangleMeshShape(mesh2,true);
-    }
-    else
-        delete mesh2;
+    getBoundingBox(node, shape);
 }
 
-bool ManualBulletShapeLoader::hasRootCollisionNode(Nif::Node const * node)
+
+const Nif::Node* BulletShapeLoader::findRootCollisionNode(const Nif::Node *node)
 {
     if(node->recType == Nif::RC_RootCollisionNode)
-        return true;
+        return node;
 
     const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
-    if(ninode)
+    if(ninode != NULL)
     {
-        const Nif::NodeList &list = ninode->children;
-        for(size_t i = 0;i < list.length();i++)
+        for(size_t i = 0;i < ninode->children.length();i++)
         {
-            if(!list[i].empty())
-            {
-                if(hasRootCollisionNode(list[i].getPtr()))
-                    return true;
-            }
+            if(ninode->children[i].empty())
+                continue;
+            if((node=findRootCollisionNode(ninode->children[i].getPtr())) != NULL)
+                return node;
+        }
+    }
+
+    return NULL;
+}
+
+void BulletShapeLoader::buildFromRootCollision(const Nif::Node *node, BulletShape *shape)
+{
+    // NOTE: We may want to load AvoidNode shapes in as ghost objects, which can then be used for
+    // AI purposes (to avoid contact).
+    if(node->recType == Nif::RC_AvoidNode)
+        return;
+
+    if(node->recType == Nif::RC_NiTriShape)
+    {
+        const Nif::NiTriShape *trishape = static_cast<const Nif::NiTriShape*>(node);
+        loadTriShape(trishape, shape);
+    }
+
+    const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
+    if(ninode != NULL)
+    {
+        for(size_t i = 0;i < ninode->children.length();i++)
+        {
+            if(!ninode->children[i].empty())
+                buildFromRootCollision(ninode->children[i].getPtr(), shape);
+        }
+    }
+}
+
+void BulletShapeLoader::buildFromModel(const Nif::Node* node, BulletShape* shape)
+{
+    Nif::ExtraPtr extra = node->extra;
+    while(!extra.empty())
+    {
+        if(extra->recType == Nif::RC_NiStringExtraData)
+        {
+            // No collisions beyond this node if one of these strings are set.
+            const Nif::NiStringExtraData *strdata = static_cast<const Nif::NiStringExtraData*>(extra.getPtr());
+            if(strdata->string == "NCO" || strdata->string == "NCC" || strdata->string == "MRK")
+                return;
+        }
+        extra = extra->extra;
+    }
+
+    if(node->recType == Nif::RC_NiTriShape)
+    {
+        const Nif::NiTriShape *trishape = static_cast<const Nif::NiTriShape*>(node);
+        loadTriShape(trishape, shape);
+    }
+
+    const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
+    if(ninode != NULL)
+    {
+        for(size_t i = 0;i < ninode->children.length();i++)
+        {
+            if(!ninode->children[i].empty())
+                buildFromModel(ninode->children[i].getPtr(), shape);
+        }
+    }
+}
+
+
+void BulletShapeLoader::loadTriShape(const Nif::NiTriShape *trishape, BulletShape *shape)
+{
+    btCollisionShape *curshape = shape->getCollisionShape();
+    assert(!curshape || curshape->isCompound());
+
+    TriangleMesh *mesh = new TriangleMesh;
+    shape->mMeshIfaces.push_back(mesh);
+
+    const Nif::NiTriShapeDataPtr data = trishape->data;
+    const std::vector<Ogre::Vector3> &vertices = data->vertices;
+    const std::vector<short> &indices = data->triangles;
+    for(size_t i = 0;i < vertices.size();++i)
+        mesh->addVertex(btVector3(vertices[i].x, vertices[i].y, vertices[i].z));
+    for(size_t i = 0;i < indices.size();i+=3)
+        mesh->addTriangleIndices(indices[i], indices[i+1], indices[i+2]);
+    mesh->finalise();
+
+    Ogre::Matrix4 transform = trishape->getWorldTransform();
+    btTransform bttrans(btMatrix3x3(transform[0][0], transform[0][1], transform[0][2],
+                                    transform[1][0], transform[1][1], transform[1][2],
+                                    transform[2][0], transform[2][1], transform[2][2]),
+                        btVector3(transform[0][3], transform[1][3], transform[2][3]));
+    btCompoundShape *comp = (curshape ? static_cast<btCompoundShape*>(curshape) : new btCompoundShape());
+    comp->addChildShape(bttrans, new btBvhTriangleMeshShape(mesh, true));
+    shape->setCollisionShape(comp);
+}
+
+
+bool BulletShapeLoader::getBoundingBox(const Nif::Node* node, BulletShape* shape)
+{
+    if(node->hasBounds && node->name == "Bounding Box")
+    {
+        const Ogre::Matrix3 &mat3 = node->boundRot;
+        shape->mBBoxTransform.setBasis(btMatrix3x3(mat3[0][0], mat3[0][1], mat3[0][2],
+                                                   mat3[1][0], mat3[1][1], mat3[1][2],
+                                                   mat3[2][0], mat3[2][1], mat3[2][2]));
+        shape->mBBoxTransform.setOrigin(btVector3(node->boundPos.x, node->boundPos.y, node->boundPos.z));
+
+        shape->mBBoxRadius.setX(node->boundXYZ.x);
+        shape->mBBoxRadius.setY(node->boundXYZ.y);
+        shape->mBBoxRadius.setZ(node->boundXYZ.z);
+
+        return true;
+    }
+
+    const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
+    if(ninode != NULL)
+    {
+        for(size_t i = 0;i < ninode->children.length();i++)
+        {
+            if(ninode->children[i].empty())
+                continue;
+            if(getBoundingBox(ninode->children[i].getPtr(), shape))
+                return true;
         }
     }
 
     return false;
 }
 
-void ManualBulletShapeLoader::handleNode(btTriangleMesh* mesh, const Nif::Node *node, int flags,
-                                         bool isCollisionNode,
-                                         bool raycasting, bool isMarker)
-{
-    // Accumulate the flags from all the child nodes. This works for all
-    // the flags we currently use, at least.
-    flags |= node->flags;
-
-    if (!raycasting)
-        isCollisionNode = isCollisionNode || (node->recType == Nif::RC_RootCollisionNode);
-    else
-        isCollisionNode = isCollisionNode && (node->recType != Nif::RC_RootCollisionNode);
-
-    // Don't collide with AvoidNode shapes
-    if(node->recType == Nif::RC_AvoidNode)
-        flags |= 0x800;
-
-    // Marker objects
-    /// \todo don't do this in the editor
-    std::string nodename = node->name;
-    Misc::StringUtils::toLower(nodename);
-    if (nodename.find("marker") != std::string::npos)
-        isMarker = true;
-
-    // Check for extra data
-    Nif::Extra const *e = node;
-    while (!e->extra.empty())
-    {
-        // Get the next extra data in the list
-        e = e->extra.getPtr();
-        assert(e != NULL);
-
-        if (e->recType == Nif::RC_NiStringExtraData)
-        {
-            // String markers may contain important information
-            // affecting the entire subtree of this node
-            Nif::NiStringExtraData *sd = (Nif::NiStringExtraData*)e;
-
-            // not sure what the difference between NCO and NCC is, or if there even is one
-            if (sd->string == "NCO" || sd->string == "NCC")
-            {
-                // No collision. Use an internal flag setting to mark this.
-                flags |= 0x800;
-            }
-            else if (sd->string == "MRK")
-                // Marker objects. These are only visible in the
-                // editor. Until and unless we add an editor component to
-                // the engine, just skip this entire node.
-                isMarker = true;
-        }
-    }
-
-    if ( (isCollisionNode || (!mShape->mHasCollisionNode && !raycasting))
-            && (!isMarker || (mShape->mHasCollisionNode && !raycasting)))
-    {
-        if(node->hasBounds)
-        {
-            // Checking for BBoxCollision flag causes issues with some actors :/
-            if (!(node->flags & Nif::NiNode::Flag_Hidden))
-            {
-                mShape->mBoxTranslation = node->boundPos;
-                mShape->mBoxRotation = node->boundRot;
-                mBoundingBox = new btBoxShape(getbtVector(node->boundXYZ));
-            }
-        }
-        else if(node->recType == Nif::RC_NiTriShape)
-        {
-            mShape->mCollide = !(flags&0x800);
-            handleNiTriShape(mesh, static_cast<const Nif::NiTriShape*>(node), flags, node->getWorldTransform(), raycasting);
-        }
-    }
-
-    // For NiNodes, loop through children
-    const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
-    if(ninode)
-    {
-        const Nif::NodeList &list = ninode->children;
-        for(size_t i = 0;i < list.length();i++)
-        {
-            if(!list[i].empty())
-                handleNode(mesh, list[i].getPtr(), flags, isCollisionNode, raycasting, isMarker);
-        }
-    }
 }
-
-void ManualBulletShapeLoader::handleNiTriShape(btTriangleMesh* mesh, const Nif::NiTriShape *shape, int flags, const Ogre::Matrix4 &transform,
-                                               bool raycasting)
-{
-    assert(shape != NULL);
-
-    // Interpret flags
-    bool hidden    = (flags&Nif::NiNode::Flag_Hidden) != 0;
-    bool collide   = (flags&Nif::NiNode::Flag_MeshCollision) != 0;
-    bool bbcollide = (flags&Nif::NiNode::Flag_BBoxCollision) != 0;
-
-    // If the object was marked "NCO" earlier, it shouldn't collide with
-    // anything. So don't do anything.
-    if ((flags & 0x800) && !raycasting)
-    {
-        collide = false;
-        bbcollide = false;
-        return;
-    }
-
-    if (!collide && !bbcollide && hidden && !raycasting)
-        // This mesh apparently isn't being used for anything, so don't
-        // bother setting it up.
-        return;
-
-    mHasShape = true;
-
-    const Nif::NiTriShapeData *data = shape->data.getPtr();
-    const std::vector<Ogre::Vector3> &vertices = data->vertices;
-    const short *triangles = &data->triangles[0];
-    for(size_t i = 0;i < data->triangles.size();i+=3)
-    {
-        Ogre::Vector3 b1 = transform*vertices[triangles[i+0]];
-        Ogre::Vector3 b2 = transform*vertices[triangles[i+1]];
-        Ogre::Vector3 b3 = transform*vertices[triangles[i+2]];
-        mesh->addTriangle(btVector3(b1.x,b1.y,b1.z),btVector3(b2.x,b2.y,b2.z),btVector3(b3.x,b3.y,b3.z));
-    }
-}
-
-void ManualBulletShapeLoader::load(const std::string &name,const std::string &group)
-{
-    // Check if the resource already exists
-    Ogre::ResourcePtr ptr = OEngine::Physic::BulletShapeManager::getSingleton().getByName(name, group);
-    if (!ptr.isNull())
-        return;
-    OEngine::Physic::BulletShapeManager::getSingleton().create(name,group,true,this);
-}
-
-} // namespace NifBullet

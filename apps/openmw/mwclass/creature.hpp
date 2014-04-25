@@ -42,7 +42,7 @@ namespace MWClass
              virtual void insertObjectRendering (const MWWorld::Ptr& ptr, MWRender::RenderingInterface& renderingInterface) const;
             ///< Add reference into a cell for rendering
 
-            virtual void insertObject(const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem& physics) const;
+            virtual void insertObject(const MWWorld::Ptr& ptr, MWPhysics::PhysicsSystem& physics) const;
 
             virtual void adjustPosition(const MWWorld::Ptr& ptr) const;
 

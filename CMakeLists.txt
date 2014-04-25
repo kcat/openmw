@@ -135,21 +135,7 @@ set(OENGINE_GUI
   ${LIBDIR}/openengine/gui/layout.hpp
 )
 
-set(OENGINE_BULLET
-    ${LIBDIR}/openengine/bullet/BtOgre.cpp
-    ${LIBDIR}/openengine/bullet/BtOgreExtras.h
-    ${LIBDIR}/openengine/bullet/BtOgreGP.h
-    ${LIBDIR}/openengine/bullet/BtOgrePG.h
-    ${LIBDIR}/openengine/bullet/physic.cpp
-    ${LIBDIR}/openengine/bullet/physic.hpp
-    ${LIBDIR}/openengine/bullet/BulletShapeLoader.cpp
-    ${LIBDIR}/openengine/bullet/BulletShapeLoader.h
-    ${LIBDIR}/openengine/bullet/trace.cpp
-    ${LIBDIR}/openengine/bullet/trace.h
-
-)
-
-set(OENGINE_ALL ${OENGINE_OGRE} ${OENGINE_GUI} ${OENGINE_BULLET})
+set(OENGINE_ALL ${OENGINE_OGRE} ${OENGINE_GUI})
 source_group(libs\\openengine FILES ${OENGINE_ALL})
 
 set(OPENMW_LIBS ${OENGINE_ALL})

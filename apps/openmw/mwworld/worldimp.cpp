@@ -8,9 +8,8 @@
 #endif
 
 #include <OgreSceneNode.h>
-
-#include <libs/openengine/bullet/trace.h>
-#include <libs/openengine/bullet/physic.hpp>
+#include <OgreRay.h>
+#include <OgreCamera.h>
 
 #include <components/bsa/bsa_archive.hpp>
 #include <components/files/collections.hpp>
@@ -18,6 +17,7 @@
 #include <components/esm/cellid.hpp>
 
 #include <boost/math/special_functions/sign.hpp>
+#include <LinearMath/btVector3.h>
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/soundmanager.hpp"
@@ -31,8 +31,11 @@
 #include "../mwmechanics/levelledlist.hpp"
 #include "../mwmechanics/combat.hpp"
 
+#include "../mwrender/renderingmanager.hpp"
 #include "../mwrender/sky.hpp"
 #include "../mwrender/animation.hpp"
+
+#include "../mwphysics/physicssystem.hpp"
 
 #include "../mwclass/door.hpp"
 
@@ -128,16 +131,13 @@ namespace MWWorld
       mSky (true), mCells (mStore, mEsm),
       mActivationDistanceOverride (activationDistanceOverride),
       mFallback(fallbackMap), mPlayIntro(0), mTeleportEnabled(true), mLevitationEnabled(true),
-      mFacedDistance(FLT_MAX), mGodMode(false), mContentFiles (contentFiles),
-      mGoToJail(false),
+      mFacedDistance(std::numeric_limits<float>::max()), mGodMode(false),
+      mContentFiles(contentFiles), mGoToJail(false),
       mStartCell (startCell)
     {
-        mPhysics = new PhysicsSystem(renderer);
-        mPhysEngine = mPhysics->getEngine();
+        mPhysics = new MWPhysics::PhysicsSystem(renderer.getScene());
 
-        mRendering = new MWRender::RenderingManager(renderer, resDir, cacheDir, mPhysEngine,&mFallback);
-
-        mPhysEngine->setSceneManager(renderer.getScene());
+        mRendering = new MWRender::RenderingManager(renderer, resDir, cacheDir, &mFallback);
 
         mWeatherManager = new MWWorld::WeatherManager(mRendering,&mFallback);
 
@@ -168,7 +168,7 @@ namespace MWWorld
 
         mGlobalVariables.fill (mStore);
 
-        mWorldScene = new Scene(*mRendering, mPhysics);
+        mWorldScene = new Scene(*mRendering, *mPhysics);
     }
 
     void World::startNewGame (bool bypass)
@@ -388,13 +388,13 @@ namespace MWWorld
 
     void World::useDeathCamera()
     {
-        if(mRendering->getCamera()->isVanityOrPreviewModeEnabled() )
+        /*if(mRendering->getCamera()->isVanityOrPreviewModeEnabled() )
         {
             mRendering->getCamera()->togglePreviewMode(false);
             mRendering->getCamera()->toggleVanityMode(false);
         }
         if(mRendering->getCamera()->isFirstPerson())
-            togglePOV();
+            togglePOV();*/
     }
 
     MWWorld::Player& World::getPlayer()
@@ -836,9 +836,7 @@ namespace MWWorld
 
     MWWorld::Ptr World::getFacedObject()
     {
-        if (mFacedHandle.empty())
-            return MWWorld::Ptr();
-        return searchPtrViaHandle(mFacedHandle);
+        return mFacedPtr;
     }
 
     std::pair<MWWorld::Ptr,Ogre::Vector3> World::getHitContact(const MWWorld::Ptr &ptr, float distance)
@@ -858,12 +856,11 @@ namespace MWWorld
                 pos += node->_getDerivedPosition();
         }
 
-        std::pair<std::string,Ogre::Vector3> result = mPhysics->getHitContact(ptr.getRefData().getHandle(),
-                                                                              pos, rot, distance);
-        if(result.first.empty())
+        std::pair<Ptr,Ogre::Vector3> result = mPhysics->getHitContact(ptr.getRefData().getHandle(),
+                                                                      pos, rot, distance);
+        if(result.first.isEmpty())
             return std::make_pair(MWWorld::Ptr(), Ogre::Vector3(0.0f));
-
-        return std::make_pair(searchPtrViaHandle(result.first), result.second);
+        return result;
     }
 
     void World::deleteObject (const Ptr& ptr)
@@ -937,6 +934,7 @@ namespace MWWorld
 
                     mRendering->updateObjectCell(ptr, copy);
                     MWBase::Environment::get().getSoundManager()->updatePtr (ptr, copy);
+                    mPhysics->updateObject(ptr.getRefData().getHandle(), copy);
 
                     MWBase::MechanicsManager *mechMgr = MWBase::Environment::get().getMechanicsManager();
                     mechMgr->updateCell(ptr, copy);
@@ -957,7 +955,7 @@ namespace MWWorld
         if (haveToMove && ptr.getRefData().getBaseNode())
         {
             mRendering->moveObject(ptr, vec);
-            mPhysics->moveObject (ptr);
+            mPhysics->updatePosition(ptr);
         }
     }
 
@@ -990,7 +988,7 @@ namespace MWWorld
         if(ptr.getRefData().getBaseNode() == 0)
             return;
         mRendering->scaleObject(ptr, Vector3(scale,scale,scale));
-        mPhysics->scaleObject(ptr);
+        mPhysics->updateScale(ptr);
     }
 
     void World::rotateObjectImp (const Ptr& ptr, Ogre::Vector3 rot, bool adjust)
@@ -1038,44 +1036,38 @@ namespace MWWorld
         if(ptr.getRefData().getBaseNode() != 0)
         {
             mRendering->rotateObject(ptr);
-            mPhysics->rotateObject(ptr);
+            mPhysics->updateRotation(ptr);
         }
     }
 
-    void World::localRotateObject (const Ptr& ptr, float x, float y, float z)
+    void World::localRotateObject(const Ptr& ptr, float x, float y, float z)
     {
-        if (ptr.getRefData().getBaseNode() != 0) {
+        if(ptr.getRefData().getBaseNode() != 0)
+        {
+            while(x >= 180.0f) x -= 360.0f;
+            while(x < -180.0f) x += 360.0f;
 
-            ptr.getRefData().getLocalRotation().rot[0]=Ogre::Degree(x).valueRadians();
-            ptr.getRefData().getLocalRotation().rot[1]=Ogre::Degree(y).valueRadians();
-            ptr.getRefData().getLocalRotation().rot[2]=Ogre::Degree(z).valueRadians();
+            while(y >= 180.0f) y -= 360.0f;
+            while(y < -180.0f) y += 360.0f;
 
-            float fullRotateRad=Ogre::Degree(360).valueRadians();
+            while(z >= 180.0f) z -= 360.0f;
+            while(z < -180.0f) z += 360.0f;
 
-            while(ptr.getRefData().getLocalRotation().rot[0]>=fullRotateRad)
-                ptr.getRefData().getLocalRotation().rot[0]-=fullRotateRad;
-            while(ptr.getRefData().getLocalRotation().rot[1]>=fullRotateRad)
-                ptr.getRefData().getLocalRotation().rot[1]-=fullRotateRad;
-            while(ptr.getRefData().getLocalRotation().rot[2]>=fullRotateRad)
-                ptr.getRefData().getLocalRotation().rot[2]-=fullRotateRad;
+            ptr.getRefData().getLocalRotation().rot[0] = Ogre::Degree(x).valueRadians();
+            ptr.getRefData().getLocalRotation().rot[1] = Ogre::Degree(y).valueRadians();
+            ptr.getRefData().getLocalRotation().rot[2] = Ogre::Degree(z).valueRadians();
 
-            while(ptr.getRefData().getLocalRotation().rot[0]<=-fullRotateRad)
-                ptr.getRefData().getLocalRotation().rot[0]+=fullRotateRad;
-            while(ptr.getRefData().getLocalRotation().rot[1]<=-fullRotateRad)
-                ptr.getRefData().getLocalRotation().rot[1]+=fullRotateRad;
-            while(ptr.getRefData().getLocalRotation().rot[2]<=-fullRotateRad)
-                ptr.getRefData().getLocalRotation().rot[2]+=fullRotateRad;
+            float *worldRot = ptr.getRefData().getPosition().rot;
+            Ogre::Quaternion worldRotQuat(Ogre::Quaternion(Ogre::Radian(-worldRot[0]), Ogre::Vector3::UNIT_X)*
+                                          Ogre::Quaternion(Ogre::Radian(-worldRot[1]), Ogre::Vector3::UNIT_Y)*
+                                          Ogre::Quaternion(Ogre::Radian(-worldRot[2]), Ogre::Vector3::UNIT_Z));
 
-            Ogre::Quaternion worldRotQuat(Ogre::Quaternion(Ogre::Radian(ptr.getRefData().getPosition().rot[0]), Ogre::Vector3::NEGATIVE_UNIT_X)*
-            Ogre::Quaternion(Ogre::Radian(ptr.getRefData().getPosition().rot[1]), Ogre::Vector3::NEGATIVE_UNIT_Y)*
-            Ogre::Quaternion(Ogre::Radian(ptr.getRefData().getPosition().rot[2]), Ogre::Vector3::NEGATIVE_UNIT_Z));
+            Ogre::Quaternion localRotQuat(Ogre::Quaternion(Ogre::Degree(-x), Ogre::Vector3::UNIT_X)*
+                                          Ogre::Quaternion(Ogre::Degree(-y), Ogre::Vector3::UNIT_Y)*
+                                          Ogre::Quaternion(Ogre::Degree(-z), Ogre::Vector3::UNIT_Z));
 
-            Ogre::Quaternion rot(Ogre::Quaternion(Ogre::Degree(x), Ogre::Vector3::NEGATIVE_UNIT_X)*
-            Ogre::Quaternion(Ogre::Degree(y), Ogre::Vector3::NEGATIVE_UNIT_Y)*
-            Ogre::Quaternion(Ogre::Degree(z), Ogre::Vector3::NEGATIVE_UNIT_Z));
-
-            ptr.getRefData().getBaseNode()->setOrientation(worldRotQuat*rot);
-            mPhysics->rotateObject(ptr);
+            ptr.getRefData().getBaseNode()->setOrientation(worldRotQuat*localRotQuat);
+            mPhysics->updateRotation(ptr);
         }
     }
 
@@ -1141,9 +1133,9 @@ namespace MWWorld
         cellY = std::floor(y/cellSize);
     }
 
-    void World::queueMovement(const Ptr &ptr, const Vector3 &velocity)
+    void World::queueMovement(const Ptr &ptr, const Vector3 &velocity, bool walking)
     {
-        mPhysics->queueObjectMovement(ptr, velocity);
+        mPhysics->queueActorMovement(ptr, velocity, walking);
     }
 
     void World::doPhysics(float duration)
@@ -1153,10 +1145,13 @@ namespace MWWorld
         moveMagicBolts(duration);
         moveProjectiles(duration);
 
-        const PtrVelocityList &results = mPhysics->applyQueuedMovement(duration);
-        PtrVelocityList::const_iterator player(results.end());
-        for(PtrVelocityList::const_iterator iter(results.begin());iter != results.end();iter++)
+        const MWPhysics::PtrPositionList &results = mPhysics->applyQueuedMovement(duration);
+        MWPhysics::PtrPositionList::const_iterator player(results.end());
+        for(MWPhysics::PtrPositionList::const_iterator iter(results.begin());iter != results.end();iter++)
         {
+            // FIXME: Why does this happen?
+            if(iter->first.getCell() == NULL)
+                continue;
             if(iter->first.getRefData().getHandle() == "player")
             {
                 /* Handle player last, in case a cell transition occurs */
@@ -1167,8 +1162,6 @@ namespace MWWorld
         }
         if(player != results.end())
             moveObjectImp(player->first, player->second.x, player->second.y, player->second.z);
-
-        mPhysEngine->stepSimulation(duration);
     }
 
     bool World::castRay (float x1, float y1, float z1, float x2, float y2, float z2)
@@ -1218,8 +1211,15 @@ namespace MWWorld
         return mPhysics->toggleCollisionMode();
     }
 
-    bool World::toggleRenderMode (RenderMode mode)
+    bool World::getCollisionMode(const Ptr &actor) const
     {
+        return mPhysics->getCollisionMode(actor);
+    }
+
+    bool World::toggleRenderMode(RenderMode mode)
+    {
+        if(mode == Render_CollisionDebug)
+            return mPhysics->toggleCollisionDebug();
         return mRendering->toggleRenderMode (mode);
     }
 
@@ -1316,8 +1316,7 @@ namespace MWWorld
 
         mWorldScene->update (duration, paused);
 
-        if (!paused)
-            doPhysics (duration);
+        doPhysics (paused ? 0.0f : duration);
 
         performUpdateSceneQueries ();
 
@@ -1366,7 +1365,7 @@ namespace MWWorld
         updateFacedHandle ();
     }
 
-    void World::updateFacedHandle ()
+    void World::updateFacedHandle()
     {
         float telekinesisRangeBonus =
                 mPlayer->getPlayer().getClass().getCreatureStats(mPlayer->getPlayer()).getMagicEffects()
@@ -1378,43 +1377,26 @@ namespace MWWorld
 
         // send new query
         // figure out which object we want to test against
-        std::vector < std::pair < float, std::string > > results;
+        std::pair<float,Ptr> result;
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
             float x, y;
             MWBase::Environment::get().getWindowManager()->getMousePosition(x, y);
-            results = mPhysics->getFacedHandles(x, y, activationDistance);
-            if (MWBase::Environment::get().getWindowManager()->isConsoleMode())
-                results = mPhysics->getFacedHandles(x, y, getMaxActivationDistance ()*50);
-        }
-        else
-        {
-            results = mPhysics->getFacedHandles(activationDistance);
-        }
-
-        // ignore the player and other things we're not interested in
-        std::vector < std::pair < float, std::string > >::iterator it = results.begin();
-        while (it != results.end())
-        {
-            if ( (*it).second.find("HeightField") != std::string::npos // not interested in terrain
-            || getPtrViaHandle((*it).second) == mPlayer->getPlayer() ) // not interested in player (unless you want to talk to yourself)
-            {
-                it = results.erase(it);
-            }
+            Ogre::Ray ray = mRendering->getCamera()->getCameraToViewportRay(x, y);
+            if(!MWBase::Environment::get().getWindowManager()->isConsoleMode())
+                result = mRendering->getFacedHandle(ray, getMaxActivationDistance());
             else
-                ++it;
-        }
-
-        if (results.empty())
-        {
-            mFacedHandle = "";
-            mFacedDistance = FLT_MAX;
+                result = mRendering->getFacedHandle(ray, getMaxActivationDistance()*50.0f);
         }
         else
         {
-            mFacedHandle = results.front().second;
-            mFacedDistance = results.front().first;
+            Ogre::Ray ray = mRendering->getCamera()->getCameraToViewportRay(0.5f, 0.5f);
+            ray.setOrigin(mRendering->getCamera()->getParentNode()->_getDerivedPosition());
+            result = mRendering->getFacedHandle(ray, getMaxActivationDistance());
         }
+
+        mFacedDistance = result.first;
+        mFacedPtr = result.second;
     }
 
     bool World::isCellExterior() const
@@ -1604,22 +1586,13 @@ namespace MWWorld
     {
         MWWorld::CellStore* cell = actor.getCell();
 
-        ESM::Position pos =
-            actor.getRefData().getPosition();
+        ESM::Position pos = actor.getRefData().getPosition();
         // We want only the Z part of the actor's rotation
         pos.rot[0] = 0;
         pos.rot[1] = 0;
 
-        Ogre::Vector3 orig =
-            Ogre::Vector3(pos.pos);
-        Ogre::Vector3 dir = Ogre::Vector3(0, 0, -1);
-
-        float len = (pos.pos[2] >= 0) ? pos.pos[2] : -pos.pos[2];
-        len += 100.0;
-
-        std::pair<bool, Ogre::Vector3> hit =
-            mPhysics->castRay(orig, dir, len);
-        pos.pos[2] = hit.second.z;
+        Ogre::Vector3 hit = mPhysics->traceDown(actor);
+        pos.pos[2] = hit.z;
 
         // copy the object and set its count
         int origCount = object.getRefData().getCount();
@@ -1658,9 +1631,12 @@ namespace MWWorld
                 && isLevitationEnabled())
             return true;
 
-        const OEngine::Physic::PhysicActor *actor = mPhysEngine->getCharacter(ptr.getRefData().getHandle());
-        if(!actor || !actor->getCollisionMode())
-            return true;
+        if(!ptr.getClass().isNpc())
+        {
+            MWWorld::LiveCellRef<ESM::Creature> *ref = ptr.get<ESM::Creature>();
+            if((ref->mBase->mFlags&ESM::Creature::Flies))
+                return true;
+        }
 
         return false;
     }
@@ -1682,9 +1658,8 @@ namespace MWWorld
     {
         float *fpos = object.getRefData().getPosition().pos;
         Ogre::Vector3 pos(fpos[0], fpos[1], fpos[2]);
-
-        const OEngine::Physic::PhysicActor *actor = mPhysEngine->getCharacter(object.getRefData().getHandle());
-        if(actor) pos.z += 1.85*actor->getHalfExtents().z;
+        // FIXME: Submerged = 90% under?
+        pos.z += mPhysics->getActorHeight(object) * 0.9f;
 
         return isUnderwater(object.getCell(), pos);
     }
@@ -1692,13 +1667,10 @@ namespace MWWorld
     bool
     World::isSwimming(const MWWorld::Ptr &object) const
     {
-        /// \todo add check ifActor() - only actors can swim
         float *fpos = object.getRefData().getPosition().pos;
         Ogre::Vector3 pos(fpos[0], fpos[1], fpos[2]);
-
-        /// \fixme 3/4ths submerged?
-        const OEngine::Physic::PhysicActor *actor = mPhysEngine->getCharacter(object.getRefData().getHandle());
-        if(actor) pos.z += actor->getHalfExtents().z * 1.5;
+        // FIXME: Swimming = 75% under?
+        pos.z += mPhysics->getActorHeight(object) * 0.75f;
 
         return isUnderwater(object.getCell(), pos);
     }
@@ -1712,43 +1684,9 @@ namespace MWWorld
         return pos.z < cell->getWaterLevel();
     }
 
-    // physactor->getOnGround() is not a reliable indicator of whether the actor
-    // is on the ground (defaults to false, which means code blocks such as
-    // CharacterController::update() may falsely detect "falling").
-    //
-    // Also, collisions can move z position slightly off zero, giving a false
-    // indication. In order to reduce false detection of jumping, small distance
-    // below the actor is detected and ignored. A value of 1.5 is used here, but
-    // something larger may be more suitable.  This change should resolve Bug#1271.
-    //
-    // TODO: There might be better places to update PhysicActor::mOnGround.
     bool World::isOnGround(const MWWorld::Ptr &ptr) const
     {
-        RefData &refdata = ptr.getRefData();
-        const OEngine::Physic::PhysicActor *physactor = mPhysEngine->getCharacter(refdata.getHandle());
-
-        if(!physactor)
-            return false;
-
-        if(physactor->getOnGround())
-            return true;
-        else
-        {
-            Ogre::Vector3 pos(ptr.getRefData().getPosition().pos);
-            OEngine::Physic::ActorTracer tracer;
-            // a small distance above collision object is considered "on ground"
-            tracer.findGround(physactor->getCollisionBody(),
-                              pos,
-                              pos - Ogre::Vector3(0, 0, 1.5f), // trace a small amount down
-                              mPhysEngine);
-            if(tracer.mFraction < 1.0f) // collision, must be close to something below
-            {
-                const_cast<OEngine::Physic::PhysicActor *> (physactor)->setOnGround(true);
-                return true;
-            }
-            else
-                return false;
-        }
+        return mPhysics->isOnGround(ptr);
     }
 
     bool World::vanityRotateCamera(float * rot)
@@ -1791,11 +1729,9 @@ namespace MWWorld
         CellStore *currentCell = mWorldScene->getCurrentCell();
 
         Ptr player = mPlayer->getPlayer();
-        RefData &refdata = player.getRefData();
-        Ogre::Vector3 playerPos(refdata.getPosition().pos);
+        Ogre::Vector3 playerPos(player.getRefData().getPosition().pos);
 
-        const OEngine::Physic::PhysicActor *physactor = mPhysEngine->getCharacter(refdata.getHandle());
-        if((!physactor->getOnGround()&&physactor->getCollisionMode()) || isUnderwater(currentCell, playerPos))
+        if(!isOnGround(player) || isUnderwater(currentCell, playerPos))
             return 2;
         if((currentCell->getCell()->mData.mFlags&ESM::Cell::NoSleep) ||
            Class::get(player).getNpcStats(player).isWerewolf())
@@ -1844,18 +1780,12 @@ namespace MWWorld
 
     bool World::getPlayerStandingOn (const MWWorld::Ptr& object)
     {
-        MWWorld::Ptr player = mPlayer->getPlayer();
-        if (!mPhysEngine->getCharacter("player")->getOnGround())
-            return false;
-        btVector3 from (player.getRefData().getPosition().pos[0], player.getRefData().getPosition().pos[1], player.getRefData().getPosition().pos[2]);
-        btVector3 to = from - btVector3(0,0,5);
-        std::pair<std::string, float> result = mPhysEngine->rayTest(from, to);
-        return result.first == object.getRefData().getBaseNode()->getName();
+        return false;
     }
 
     bool World::getActorStandingOn (const MWWorld::Ptr& object)
     {
-        return mPhysEngine->isAnyActorStandingOn(object.getRefData().getBaseNode()->getName());
+        return false;
     }
 
     float World::getWindSpeed()
@@ -1913,24 +1843,19 @@ namespace MWWorld
     {
         if (!targetNpc.getRefData().isEnabled() || !npc.getRefData().isEnabled())
             return false; // cannot get LOS unless both NPC's are enabled
-        Ogre::Vector3 halfExt1 = mPhysEngine->getCharacter(npc.getRefData().getHandle())->getHalfExtents();
+        float halfHeight1 = mPhysics->getActorHeight(npc) * 0.5f;
         float* pos1 = npc.getRefData().getPosition().pos;
-        Ogre::Vector3 halfExt2 = mPhysEngine->getCharacter(targetNpc.getRefData().getHandle())->getHalfExtents();
+        float halfHeight2 = mPhysics->getActorHeight(targetNpc) * 0.5f;
         float* pos2 = targetNpc.getRefData().getPosition().pos;
 
-        btVector3 from(pos1[0],pos1[1],pos1[2]+halfExt1.z);
-        btVector3 to(pos2[0],pos2[1],pos2[2]+halfExt2.z);
+        Ogre::Vector3 from(pos1[0], pos1[1], pos1[2]+halfHeight1);
+        Ogre::Vector3 to(pos2[0], pos2[1], pos2[2]+halfHeight2);
 
-        std::pair<std::string, float> result = mPhysEngine->rayTest(from, to,false);
-        if(result.first == "") return true;
-        return false;
+        return !mPhysics->castRay(from, to, false);
     }
 
     void World::enableActorCollision(const MWWorld::Ptr& actor, bool enable)
     {
-        OEngine::Physic::PhysicActor *physicActor = mPhysEngine->getCharacter(actor.getRefData().getHandle());
-
-        physicActor->enableCollisions(enable);
     }
 
     bool World::findInteriorPosition(const std::string &name, ESM::Position &pos)
@@ -2252,7 +2177,7 @@ namespace MWWorld
             return;
 
         // Spawn at 0.75 * ActorHeight
-        float height = mPhysEngine->getCharacter(actor.getRefData().getHandle())->getHalfExtents().z * 2 * 0.75;
+        float height = mPhysics->getActorHeight(actor) * 0.75f;
 
         MWWorld::ManualRef ref(getStore(), projectileModel);
         ESM::Position pos;
@@ -2327,12 +2252,12 @@ namespace MWWorld
             // Check for impact
             btVector3 from(pos.x, pos.y, pos.z);
             btVector3 to(newPos.x, newPos.y, newPos.z);
-            std::vector<std::pair<float, std::string> > collisions = mPhysEngine->rayTest2(from, to);
+            std::vector<std::pair<float, std::string> > collisions;// = mPhysEngine->rayTest2(from, to);
             bool hit=false;
 
             // HACK: query against the shape as well, since the ray does not take the volume into account
             // really, this should be a convex cast, but the whole physics system needs a rewrite
-            std::vector<std::string> col2 = mPhysEngine->getCollisions(ptr.getRefData().getHandle());
+            std::vector<std::string> col2 = mPhysics->getCollisions(ptr);
             for (std::vector<std::string>::iterator ci = col2.begin(); ci != col2.end(); ++ci)
                  collisions.push_back(std::make_pair(0.f,*ci));
 
@@ -2420,11 +2345,11 @@ namespace MWWorld
             // Check for impact
             btVector3 from(pos.x, pos.y, pos.z);
             btVector3 to(newPos.x, newPos.y, newPos.z);
-            std::vector<std::pair<float, std::string> > collisions = mPhysEngine->rayTest2(from, to);
+            std::vector<std::string> collisions = mPhysics->getCollisions(ptr);
             bool explode = false;
-            for (std::vector<std::pair<float, std::string> >::iterator cIt = collisions.begin(); cIt != collisions.end() && !explode; ++cIt)
+            for (std::vector<std::string>::iterator cIt = collisions.begin(); cIt != collisions.end() && !explode; ++cIt)
             {
-                MWWorld::Ptr obstacle = searchPtrViaHandle(cIt->second);
+                MWWorld::Ptr obstacle = searchPtrViaHandle(*cIt);
                 if (obstacle == ptr)
                     continue;
 

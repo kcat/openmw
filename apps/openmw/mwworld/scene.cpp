@@ -12,7 +12,10 @@
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
-#include "physicssystem.hpp"
+#include "../mwrender/renderingmanager.hpp"
+
+#include "../mwphysics/physicssystem.hpp"
+
 #include "player.hpp"
 #include "localscripts.hpp"
 #include "esmstore.hpp"
@@ -27,17 +30,17 @@ namespace
         MWWorld::CellStore& mCell;
         bool mRescale;
         Loading::Listener& mLoadingListener;
-        MWWorld::PhysicsSystem& mPhysics;
+        MWPhysics::PhysicsSystem& mPhysics;
         MWRender::RenderingManager& mRendering;
 
         InsertFunctor (MWWorld::CellStore& cell, bool rescale, Loading::Listener& loadingListener,
-            MWWorld::PhysicsSystem& physics, MWRender::RenderingManager& rendering);
+            MWPhysics::PhysicsSystem& physics, MWRender::RenderingManager& rendering);
 
         bool operator() (const MWWorld::Ptr& ptr);
     };
 
     InsertFunctor::InsertFunctor (MWWorld::CellStore& cell, bool rescale,
-        Loading::Listener& loadingListener, MWWorld::PhysicsSystem& physics,
+        Loading::Listener& loadingListener, MWPhysics::PhysicsSystem& physics,
         MWRender::RenderingManager& rendering)
     : mCell (cell), mRescale (rescale), mLoadingListener (loadingListener),
       mPhysics (physics), mRendering (rendering)
@@ -101,7 +104,7 @@ namespace MWWorld
                 iter2!=functor.mHandles.end(); ++iter2)
             {
                 Ogre::SceneNode* node = *iter2;
-                mPhysics->removeObject (node->getName());
+                mPhysics.removeObject (node->getName());
             }
         }
 
@@ -113,7 +116,7 @@ namespace MWWorld
                     (*iter)->getCell()->getGridY()
                 );
             if (land)
-                mPhysics->removeHeightField ((*iter)->getCell()->getGridX(), (*iter)->getCell()->getGridY());
+                mPhysics.removeHeightField( (*iter)->getCell()->getGridX(), (*iter)->getCell()->getGridY() );
         }
 
         mRendering.removeCell(*iter);
@@ -132,8 +135,8 @@ namespace MWWorld
 
         if(result.second)
         {
-            float verts = ESM::Land::LAND_SIZE;
-            float worldsize = ESM::Land::REAL_SIZE;
+            int verts = ESM::Land::LAND_SIZE;
+            int worldsize = ESM::Land::REAL_SIZE;
 
             // Load terrain physics first...
             if (cell->getCell()->isExterior())
@@ -144,14 +147,13 @@ namespace MWWorld
                         cell->getCell()->getGridY()
                     );
                 if (land) {
-                    mPhysics->addHeightField (
-                        land->mLandData->mHeights,
+                    mPhysics.addHeightField(
                         cell->getCell()->getGridX(),
                         cell->getCell()->getGridY(),
-                        0,
-                        worldsize / (verts-1),
-                        verts)
-                    ;
+                        land->mLandData->mHeights,
+                        (float)worldsize / (float)(verts-1),
+                        verts
+                    );
                 }
             }
 
@@ -177,6 +179,7 @@ namespace MWWorld
 
         MWWorld::Ptr player = world->getPlayerPtr();
         mRendering.updatePlayerPtr(player);
+        mPhysics.updateObject(player.getRefData().getHandle(), player);
 
         if (adjustPlayerPos) {
             world->moveObject(player, pos.pos[0], pos.pos[1], pos.pos[2]);
@@ -341,8 +344,8 @@ namespace MWWorld
     }
 
     //We need the ogre renderer and a scene node.
-    Scene::Scene (MWRender::RenderingManager& rendering, PhysicsSystem *physics)
-    : mCurrentCell (0), mCellChanged (false), mPhysics(physics), mRendering(rendering)
+    Scene::Scene(MWRender::RenderingManager &rendering, MWPhysics::PhysicsSystem &physics)
+      : mCurrentCell (0), mCellChanged (false), mPhysics(physics), mRendering(rendering)
     {
     }
 
@@ -465,14 +468,14 @@ namespace MWWorld
 
     void Scene::insertCell (CellStore &cell, bool rescale, Loading::Listener* loadingListener)
     {
-        InsertFunctor functor (cell, rescale, *loadingListener, *mPhysics, mRendering);
+        InsertFunctor functor (cell, rescale, *loadingListener, mPhysics, mRendering);
         cell.forEach (functor);
     }
 
     void Scene::addObjectToScene (const Ptr& ptr)
     {
         mRendering.addObject(ptr);
-        MWWorld::Class::get(ptr).insertObject(ptr, *mPhysics);
+        MWWorld::Class::get(ptr).insertObject(ptr, mPhysics);
         MWBase::Environment::get().getWorld()->rotateObject(ptr, 0, 0, 0, true);
         MWBase::Environment::get().getWorld()->scaleObject(ptr, ptr.getCellRef().mScale);
     }
@@ -481,7 +484,7 @@ namespace MWWorld
     {
         MWBase::Environment::get().getMechanicsManager()->remove (ptr);
         MWBase::Environment::get().getSoundManager()->stopSound3D (ptr);
-        mPhysics->removeObject (ptr.getRefData().getHandle());
+        mPhysics.removeObject (ptr.getRefData().getHandle());
         mRendering.removeObject (ptr);
     }
 

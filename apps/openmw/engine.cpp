@@ -18,8 +18,8 @@
 #include <components/nif/niffile.hpp>
 #include <components/nifoverrides/nifoverrides.hpp>
 
-#include <components/nifbullet/bulletnifloader.hpp>
 #include <components/nifogre/ogrenifloader.hpp>
+#include <components/nifbullet/bulletshape.hpp>
 
 #include <components/esm/loadcell.hpp>
 
@@ -164,6 +164,7 @@ OMW::Engine::Engine(Files::ConfigurationManager& configurationManager)
   , mEncoding(ToUTF8::WINDOWS_1252)
   , mEncoder(NULL)
   , mActivationDistanceOverride(-1)
+  , mBulletShapeManager(0)
   , mGrab(true)
 
 {
@@ -187,6 +188,7 @@ OMW::Engine::Engine(Files::ConfigurationManager& configurationManager)
 OMW::Engine::~Engine()
 {
     mEnvironment.cleanup();
+    delete mBulletShapeManager;
     delete mScriptContext;
     delete mOgre;
     SDL_Quit();
@@ -345,6 +347,9 @@ void OMW::Engine::prepareEngine (Settings::Manager & settings)
     mOgre->createWindow("OpenMW", windowSettings);
 
     Bsa::registerResources (mFileCollections, mArchives, true, mFSStrict);
+
+    // Create Bullet shape resource manager
+    mBulletShapeManager = new NifBullet::BulletShapeManager;
 
     // Create input and UI first to set up a bootstrapping environment for
     // showing a loading screen and keeping the window responsive while doing so

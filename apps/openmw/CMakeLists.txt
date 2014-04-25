@@ -18,6 +18,10 @@ add_openmw_dir (mwrender
     terrainstorage renderconst effectmanager weaponanimation
     )
 
+add_openmw_dir (mwphysics
+    physicssystem debugdraw dynamiclinedrawer object actor charactercontroller
+    )
+
 add_openmw_dir (mwinput
     inputmanagerimp
     )
@@ -52,7 +56,7 @@ add_openmw_dir (mwsound
     )
 
 add_openmw_dir (mwworld
-    refdata worldimp physicssystem scene globals class action nullaction actionteleport
+    refdata worldimp scene globals class action nullaction actionteleport
     containerstore actiontalk actiontake manualref player cellfunctors failedaction
     cells localscripts customdata weather inventorystore ptr actionopen actionread
     actionequip timestamp actionalchemy cellstore actionapply actioneat

@@ -1,6 +1,8 @@
 
 #include "creature.hpp"
 
+#include <OgreVector3.h>
+
 #include <components/esm/loadcrea.hpp>
 #include <components/esm/creaturestate.hpp>
 
@@ -22,11 +24,12 @@
 #include "../mwworld/failedaction.hpp"
 #include "../mwworld/customdata.hpp"
 #include "../mwworld/containerstore.hpp"
-#include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
 
 #include "../mwrender/renderinginterface.hpp"
 #include "../mwrender/actors.hpp"
+
+#include "../mwphysics/physicssystem.hpp"
 
 #include "../mwgui/tooltips.hpp"
 
@@ -160,7 +163,7 @@ namespace MWClass
         actors.insertCreature(ptr, ref->mBase->mFlags & ESM::Creature::Weapon);
     }
 
-    void Creature::insertObject(const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem& physics) const
+    void Creature::insertObject(const MWWorld::Ptr& ptr, MWPhysics::PhysicsSystem& physics) const
     {
         const std::string model = getModel(ptr);
         if(!model.empty())

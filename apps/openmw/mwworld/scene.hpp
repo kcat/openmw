@@ -1,7 +1,7 @@
 #ifndef GAME_MWWORLD_SCENE_H
 #define GAME_MWWORLD_SCENE_H
 
-#include "../mwrender/renderingmanager.hpp"
+#include <set>
 
 #include "ptr.hpp"
 #include "globals.hpp"
@@ -33,13 +33,18 @@ namespace Render
 
 namespace MWRender
 {
+    class RenderingManager;
     class SkyManager;
     class CellRender;
 }
 
-namespace MWWorld
+namespace MWPhysics
 {
     class PhysicsSystem;
+}
+
+namespace MWWorld
+{
     class Player;
     class CellStore;
 
@@ -55,8 +60,8 @@ namespace MWWorld
             CellStore* mCurrentCell; // the cell the player is in
             CellStoreCollection mActiveCells;
             bool mCellChanged;
-            PhysicsSystem *mPhysics;
-            MWRender::RenderingManager& mRendering;
+            MWPhysics::PhysicsSystem &mPhysics;
+            MWRender::RenderingManager &mRendering;
 
             void playerCellChange (CellStore *cell, const ESM::Position& position,
                 bool adjustPlayerPos = true);
@@ -65,7 +70,7 @@ namespace MWWorld
 
         public:
 
-            Scene (MWRender::RenderingManager& rendering, PhysicsSystem *physics);
+            Scene(MWRender::RenderingManager &rendering, MWPhysics::PhysicsSystem &physics);
 
             ~Scene();
 

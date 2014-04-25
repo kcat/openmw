@@ -21,11 +21,6 @@ namespace OEngine
     {
         class Fader;
     }
-
-    namespace Physic
-    {
-        class PhysicEngine;
-    }
 }
 
 namespace ESM
@@ -293,9 +288,10 @@ namespace MWBase
             virtual void positionToIndex (float x, float y, int &cellX, int &cellY) const = 0;
             ///< Convert position to cell numbers
 
-            virtual void queueMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &velocity) = 0;
+            virtual void queueMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &velocity, bool walking) = 0;
             ///< Queues movement for \a ptr (in local space), to be applied in the next call to
-            /// doPhysics.
+            /// doPhysics. If \a walking is true, velocity will only be rotated around the Z axis,
+            /// and upward movement will be translated to jumping.
 
             virtual bool castRay (float x1, float y1, float z1, float x2, float y2, float z2) = 0;
             ///< cast a Ray and return true if there is an object in the ray path.
@@ -304,6 +300,9 @@ namespace MWBase
             ///< Toggle collision mode for player. If disabled player object should ignore
             /// collisions and gravity.
             /// \return Resulting mode
+
+            virtual bool getCollisionMode(const MWWorld::Ptr &actor) const = 0;
+            ///< Returns whether the given actor has any collisions enabled.
 
             virtual bool toggleRenderMode (RenderMode mode) = 0;
             ///< Toggle a render mode.

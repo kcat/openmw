@@ -61,16 +61,21 @@ public:
             inout.begin(),
             inout.end(),
             inout.begin(),
-            (int (*)(int)) std::tolower
+            ::tolower
         );
         return inout;
     }
 
     /// Returns lower case copy of input string
-    static std::string lowerCase(const std::string &in)
+    static std::string lowerCase(std::string str)
     {
-        std::string out = in;
-        return toLower(out);
+        std::transform(
+            str.begin(),
+            str.end(),
+            str.begin(),
+            ::tolower
+        );
+        return str;
     }
 };
 

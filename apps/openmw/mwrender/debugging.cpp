@@ -10,8 +10,6 @@
 #include <OgreTechnique.h>
 #include <OgreSceneNode.h>
 
-#include <openengine/bullet/physic.hpp>
-
 #include <components/esm/loadstat.hpp>
 #include <components/esm/loadpgrd.hpp>
 
@@ -151,12 +149,9 @@ ManualObject *Debugging::createPathgridPoints(const ESM::Pathgrid *pathgrid)
     return result;
 }
 
-Debugging::Debugging(SceneNode *root, OEngine::Physic::PhysicEngine *engine) :
-    mRootNode(root), mEngine(engine),
-    mSceneMgr(root->getCreator()),
-    mPathgridEnabled(false),
-    mInteriorPathgridNode(NULL), mPathGridRoot(NULL),
-    mGridMatsCreated(false)
+Debugging::Debugging(SceneNode *root)
+  : mRootNode(root), mSceneMgr(root->getCreator()), mPathgridEnabled(false)
+  , mInteriorPathgridNode(NULL), mPathGridRoot(NULL), mGridMatsCreated(false)
 {
     ResourceGroupManager::getSingleton().createResourceGroup(DEBUGGING_GROUP);
 }
@@ -172,12 +167,13 @@ Debugging::~Debugging()
 }
 
 
-bool Debugging::toggleRenderMode (int mode){
-    switch (mode)
+bool Debugging::toggleRenderMode(int mode)
+{
+    switch(mode)
     {
         case MWBase::World::Render_CollisionDebug:
-
-            return mEngine->toggleDebugRendering();
+            // FIXME: Enable collision shape rendering
+            return false;
 
         case MWBase::World::Render_Pathgrid:
             togglePathgrid();

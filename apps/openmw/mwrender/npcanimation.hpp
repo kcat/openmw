@@ -127,6 +127,9 @@ public:
     virtual void showWeapon(bool show) { showWeapons(show); }
     virtual void configureAddedObject(NifOgre::ObjectScenePtr object, MWWorld::Ptr ptr, int slot);
 
+    virtual float getRealIntersection(const Ogre::Ray&, float origdist)
+    { return origdist; }
+
     void setViewMode(ViewMode viewMode);
 
     void updateParts();

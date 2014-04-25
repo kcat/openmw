@@ -1,113 +1,58 @@
-/*
-  OpenMW - The completely unofficial reimplementation of Morrowind
-  Copyright (C) 2008-2010  Nicolay Korslund
-  Email: < korslund@gmail.com >
-  WWW: http://openmw.sourceforge.net/
+#ifndef NIFBULLET_NIFBULLETLOADER_HPP
+#define NIFBULLET_NIFBULLETLOADER_HPP
 
-  This file (ogre_nif_loader.h) is part of the OpenMW package.
-
-  OpenMW is distributed as free software: you can redistribute it
-  and/or modify it under the terms of the GNU General Public License
-  version 3, as published by the Free Software Foundation.
-
-  This program is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  version 3 along with this program. If not, see
-  http://www.gnu.org/licenses/ .
-
- */
-
-#ifndef OPENMW_COMPONENTS_NIFBULLET_BULLETNIFLOADER_HPP
-#define OPENMW_COMPONENTS_NIFBULLET_BULLETNIFLOADER_HPP
-
-#include <cassert>
 #include <string>
-#include <BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h>
-#include <BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h>
-#include <btBulletDynamicsCommon.h>
-#include <openengine/bullet/BulletShapeLoader.h>
 
-// For warning messages
-#include <iostream>
+#include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
+
 
 namespace Nif
 {
     class Node;
-    class Transformation;
     class NiTriShape;
 }
 
 namespace NifBullet
 {
 
-/**
-*Load bulletShape from NIF files.
-*/
-class ManualBulletShapeLoader : public OEngine::Physic::BulletShapeLoader
+class BulletShape;
+
+
+class TriangleMesh : public btTriangleIndexVertexArray
 {
+    btAlignedObjectArray<btVector3> mVertices;
+    btAlignedObjectArray<unsigned short> mIndices;
+
 public:
-    ManualBulletShapeLoader()
-      : mShape(NULL)
-      , mBoundingBox(NULL)
-      , mHasShape(false)
-    {
-    }
+    TriangleMesh();
 
-    virtual ~ManualBulletShapeLoader();
+    virtual void preallocateVertices(int) { }
+    virtual void preallocateIndices(int) { }
 
-    void warn(const std::string &msg)
-    {
-        std::cerr << "NIFLoader: Warn:" << msg << "\n";
-    }
+    void addVertex(const btVector3 &vertex);
 
-    void fail(const std::string &msg)
-    {
-        std::cerr << "NIFLoader: Fail: "<< msg << std::endl;
-        abort();
-    }
+    void addTriangleIndices(unsigned short idx1, unsigned short idx2, unsigned short idx3);
 
-    /**
-    *This function should not be called manualy. Use load instead. (this is called by the BulletShapeManager when you use load).
-    */
-    void loadResource(Ogre::Resource *resource);
+    void finalise();
 
-    /**
-    *This function load a new bulletShape from a NIF file into the BulletShapeManager.
-    *When the file is loaded, you can then use BulletShapeManager::getByName() to retrive the bulletShape.
-    *Warning: this function will just crash if the resourceGroup doesn't exist!
-    */
-    void load(const std::string &name,const std::string &group);
+    TriangleMesh *clone(float scale) const;
+};
 
-private:
-    btVector3 getbtVector(Ogre::Vector3 const &v);
 
-    /**
-    *Parse a node.
-    */
-    void handleNode(btTriangleMesh* mesh, Nif::Node const *node, int flags, bool isCollisionNode, bool raycasting, bool isMarker);
+class BulletShapeLoader
+{
+    const Nif::Node *findRootCollisionNode(const Nif::Node *node);
 
-    /**
-    *Helper function
-    */
-    bool hasRootCollisionNode(const Nif::Node *node);
+    void loadTriShape(const Nif::NiTriShape *trishape, BulletShape *shape);
+    void buildFromRootCollision(const Nif::Node *node, BulletShape *shape);
+    void buildFromModel(const Nif::Node *node, BulletShape *shape);
 
-    /**
-    *convert a NiTriShape to a bullet trishape.
-    */
-    void handleNiTriShape(btTriangleMesh* mesh, const Nif::NiTriShape *shape, int flags, const Ogre::Matrix4 &transform, bool raycasting);
+    bool getBoundingBox(const Nif::Node *node, BulletShape *shape);
 
-    std::string mResourceName;
-
-    OEngine::Physic::BulletShape* mShape;//current shape
-    btBoxShape *mBoundingBox;
-
-    bool mHasShape;
+public:
+    void load(const std::string &name, BulletShape *shape);
 };
 
 }
 
-#endif
+#endif /* NIFBULLET_NIFBULLETLOADER_HPP */

@@ -232,6 +232,19 @@ void Objects::buildStaticGeometry(MWWorld::CellStore& cell)
     }
 }
 
+
+void Objects::fillIntersectingObjects(const Ogre::Ray &ray, float queryDistance, std::vector<std::pair<float,Animation*> > &list)
+{
+    PtrAnimationMap::const_iterator iter = mObjects.begin();
+    for(;iter != mObjects.end();iter++)
+    {
+        std::pair<bool,Ogre::Real> res = ray.intersects(iter->second->getWorldBounds());
+        if(res.first && res.second <= queryDistance)
+            list.push_back(std::make_pair(res.second, iter->second));
+    }
+}
+
+
 Ogre::AxisAlignedBox Objects::getDimensions(MWWorld::CellStore* cell)
 {
     return mBounds[cell];

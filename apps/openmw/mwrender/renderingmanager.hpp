@@ -57,8 +57,7 @@ private:
 
 public:
     RenderingManager(OEngine::Render::OgreRenderer& _rend, const boost::filesystem::path& resDir,
-                     const boost::filesystem::path& cacheDir, OEngine::Physic::PhysicEngine* engine,
-                     MWWorld::Fallback* fallback);
+                     const boost::filesystem::path& cacheDir, MWWorld::Fallback* fallback);
     virtual ~RenderingManager();
 
     void togglePOV()
@@ -156,6 +155,8 @@ public:
     bool occlusionQuerySupported() { return mOcclusionQuery->supported(); }
     OcclusionQuery* getOcclusionQuery() { return mOcclusionQuery; }
 
+    std::pair<float,MWWorld::Ptr> getFacedHandle(const Ogre::Ray &ray, float queryDistance);
+
     float getTerrainHeightAt (Ogre::Vector3 worldPos);
 
     Shadows* getShadows();
@@ -198,6 +199,7 @@ public:
 
     void processChangedSettings(const Settings::CategorySettingVector& settings);
 
+    Ogre::Camera* getCamera() { return mRendering.getCamera(); }
     Ogre::Viewport* getViewport() { return mRendering.getViewport(); }
 
     void getInteriorMapPosition (Ogre::Vector2 position, float& nX, float& nY, int &x, int& y);
@@ -247,6 +249,8 @@ private:
 
     MWRender::NpcAnimation *mPlayerAnimation;
 
+    std::vector<std::pair<float,Animation*> > mFacedHandles;
+
     // 0 normal, 1 more bright, 2 max
     int mAmbientMode;
 
@@ -258,8 +262,6 @@ private:
     Ogre::ColourValue mFogColour;
     float mFogStart;
     float mFogEnd;
-
-    OEngine::Physic::PhysicEngine* mPhysicsEngine;
 
     MWRender::Camera *mCamera;
 

@@ -142,6 +142,8 @@ protected:
 
     ObjectAttachMap mAttachedObjects;
 
+    std::vector<Ogre::Vector3> mMeshVertexCache;
+    std::vector<int> mMeshIndexCache;
 
     /* Sets the appropriate animations on the bone groups based on priority.
      */
@@ -197,6 +199,8 @@ protected:
     // TODO: Should not be here
     Ogre::Vector3 getEnchantmentColor(MWWorld::Ptr item);
 
+    void updateEffects(float duration);
+
 public:
     // FIXME: Move outside of this class
     static void setRenderProperties(NifOgre::ObjectScenePtr objlist, Ogre::uint32 visflags, Ogre::uint8 solidqueue,
@@ -206,6 +210,9 @@ public:
 
     Animation(const MWWorld::Ptr &ptr, Ogre::SceneNode *node);
     virtual ~Animation();
+
+    const MWWorld::Ptr &getPtr() const
+    { return mPtr; }
 
     /**
      * @brief Add an effect mesh attached to a bone or the insert scene node
@@ -225,11 +232,7 @@ public:
     virtual void preRender (Ogre::Camera* camera);
 
     virtual void setAlpha(float alpha) {}
-private:
-    void updateEffects(float duration);
 
-
-public:
     void updatePtr(const MWWorld::Ptr &ptr);
 
     bool hasAnimation(const std::string &anim);
@@ -305,6 +308,10 @@ public:
 
     Ogre::AxisAlignedBox getWorldBounds();
 
+    /// Gets a more precise intersection point for \a ray, on the polygonal level if possible. If
+    /// it can't check per-polygon, \a origdist is returned.
+    virtual float getRealIntersection(const Ogre::Ray &ray, float origdist);
+
     Ogre::Node *getNode(const std::string &name);
 
     // Attaches the given object to a bone on this object's base skeleton. If the bone doesn't
@@ -312,6 +319,12 @@ public:
     // valid until the next setObjectRoot call.
     Ogre::TagPoint *attachObjectToBone(const Ogre::String &bonename, Ogre::MovableObject *obj);
     void detachObjectFromBone(Ogre::MovableObject *obj);
+
+    // For internal use only
+    static void getMeshInformation(const Ogre::Mesh* const mesh,
+                                   std::vector<Ogre::Vector3> &vertices,
+                                   std::vector<int> &indices,
+                                   const Ogre::Matrix4 &trans);
 };
 
 class ObjectAnimation : public Animation {

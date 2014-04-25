@@ -11,10 +11,11 @@
 #include "../mwworld/actionread.hpp"
 #include "../mwworld/failedaction.hpp"
 #include "../mwworld/cellstore.hpp"
-#include "../mwworld/physicssystem.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
+
+#include "../mwphysics/physicssystem.hpp"
 
 #include "../mwgui/tooltips.hpp"
 
@@ -30,7 +31,7 @@ namespace MWClass
         }
     }
 
-    void Book::insertObject(const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem& physics) const
+    void Book::insertObject(const MWWorld::Ptr& ptr, MWPhysics::PhysicsSystem& physics) const
     {
         const std::string model = getModel(ptr);
         if(!model.empty())
