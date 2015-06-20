@@ -377,27 +377,31 @@ namespace MWMechanics
         damage *= minstrike + ((maxstrike-minstrike)*attacker.getClass().getCreatureStats(attacker).getAttackStrength());
 
         MWMechanics::CreatureStats& otherstats = victim.getClass().getCreatureStats(victim);
-        healthdmg = (otherstats.getMagicEffects().get(ESM::MagicEffect::Paralyze).getMagnitude() > 0)
-                || otherstats.getKnockedDown();
         bool isWerewolf = (attacker.getClass().isNpc() && attacker.getClass().getNpcStats(attacker).isWerewolf());
         if(isWerewolf)
         {
             healthdmg = true;
-            // GLOB instead of GMST because it gets updated during a quest
-            damage *= MWBase::Environment::get().getWorld()->getGlobalFloat("werewolfclawmult");
-        }
-        if(healthdmg)
             damage *= store.get<ESM::GameSetting>().find("fHandtoHandHealthPer")->getFloat();
+            if (attacker == MWBase::Environment::get().getWorld()->getPlayerPtr())
+            {
+                // GLOB instead of GMST because it gets updated during a quest
+                damage *= MWBase::Environment::get().getWorld()->getGlobalFloat("werewolfclawmult");
+            }
 
-        MWBase::SoundManager *sndMgr = MWBase::Environment::get().getSoundManager();
-        if(isWerewolf)
-        {
+            MWBase::SoundManager *sndMgr = MWBase::Environment::get().getSoundManager();
             const ESM::Sound *sound = store.get<ESM::Sound>().searchRandom("WolfHit");
-            if(sound)
-                sndMgr->playSound3D(victim, sound->mId, 1.0f, 1.0f);
+            if(sound) sndMgr->playSound3D(victim, sound->mId, 1.0f, 1.0f);
         }
         else
+        {
+            healthdmg = (otherstats.getMagicEffects().get(ESM::MagicEffect::Paralyze).getMagnitude() > 0)
+                    || otherstats.getKnockedDown();
+            if(healthdmg)
+                damage *= store.get<ESM::GameSetting>().find("fHandtoHandHealthPer")->getFloat();
+
+            MWBase::SoundManager *sndMgr = MWBase::Environment::get().getSoundManager();
             sndMgr->playSound3D(victim, "Hand To Hand Hit", 1.0f, 1.0f);
+        }
     }
 
     void applyFatigueLoss(const MWWorld::Ptr &attacker, const MWWorld::Ptr &weapon)
